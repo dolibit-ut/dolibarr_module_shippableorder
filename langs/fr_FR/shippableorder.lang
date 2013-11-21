@@ -2,3 +2,7 @@
 CHARSET=UTF-8
 
 ShippableOrders=Liste des commandes expédiables
+QtyProd=Qté Total de Produits
+RealStock=Stock Réel
+TheoricStock=Stock Théorique
+InStock=Expédiable

@@ -70,6 +70,96 @@ $limit = $conf->liste_limit;
 
 $viewstatut=GETPOST('viewstatut');
 
+
+function getStockReel($idcommande){
+	global $db;
+	
+	$commande = new Commande($db);
+	$commande->fetch($idcommande);
+	$commande->fetch_lines(true); //only product
+	
+	$stockreel = 0;
+	
+	foreach($commande->lines as $line){
+		$produit = new Product($db);
+		$produit->fetch($line->fk_product);
+		
+		$produit->load_stock();
+		if($produit->stock_reel < $line->qty)
+			return false;
+	}
+	
+	return true;	
+	
+}
+
+function getStockTheorique($idcommande,$socid){
+	global $db,$conf;
+	
+	$commande = new Commande($db);
+	$commande->fetch($idcommande);
+	$commande->fetch_lines(true); //only product
+	
+	$stocktheorique = 0;
+	
+	foreach($commande->lines as $line){
+		$produit = new Product($db);
+		$produit->fetch($line->fk_product);
+		$produit->load_stock();
+		
+		//echo $produit->stock_reel.' *** <br>';
+		// Calculating a theorical value of stock if stock increment is done on real sending
+		if (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT))
+		{
+			$stock_commande_client=$stock_commande_fournisseur=0;
+
+			if (! empty($conf->commande->enabled))
+			{
+				$result=$produit->load_stats_commande(0,'1,2');
+				if ($result < 0) dol_print_error($db,$produit->error);
+				$stock_commande_client=$produit->stats_commande['qty'];
+			}
+			if (! empty($conf->fournisseur->enabled))
+			{
+				$result=$produit->load_stats_commande_fournisseur(0,'3');
+				if ($result < 0) dol_print_error($db,$produit->error);
+				$stock_commande_fournisseur=$produit->stats_commande_fournisseur['qty'];
+			}
+
+			$stocktheorique = $product->stock_reel-($stock_commande_client+$stock_sending_client)+$stock_commande_fournisseur;
+			
+			if($line->qty > $stocktheorique)
+				return false;
+		}
+	}
+	
+	return true;
+}
+
+function etatStock($idcommande,$socid){
+	
+	if(getStockReel($idcommande) && getStockTheorique($idcommande,$socid))
+		return img_picto('En Stock', 'statut4.png');
+	else 
+		return img_picto('Hors Stock', 'statut8.png');
+}
+
+function etatStockReel($idcommande,$socid){
+	
+	if(getStockReel($idcommande))
+		return img_picto('En Stock', 'statut4.png');
+	else 
+		return img_picto('Hors Stock', 'statut8.png');
+}
+
+function etatStockTheorique($idcommande,$socid){
+	
+	if(getStockTheorique($idcommande,$socid))
+		return img_picto('En Stock', 'statut4.png');
+	else 
+		return img_picto('Hors Stock', 'statut1.png');
+}
+
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
 
@@ -111,7 +201,7 @@ $help_url="EN:Module_Customers_Orders|FR:Module_Commandes_Clients|ES:Módulo_Ped
 llxHeader('',$langs->trans("ShippableOrders"),$help_url);
 
 $sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
-$sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee, SUM(cd.qty)';
+$sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee, (SELECT SUM(qty) FROM '.MAIN_DB_PREFIX.'commandedet WHERE fk_commande = c.rowid) as qty_prod';
 $sql.= ' FROM '.MAIN_DB_PREFIX.'societe as s';
 $sql.= ', '.MAIN_DB_PREFIX.'commande as c';
 $sql.= ', '.MAIN_DB_PREFIX.'commandedet as cd';
@@ -200,7 +290,9 @@ if ($search_user > 0)
     $sql.= " AND ec.fk_c_type_contact = tc.rowid AND tc.element='commande' AND tc.source='internal' AND ec.element_id = c.rowid AND ec.fk_socpeople = ".$search_user;
 }
 
-$sql.= ' ORDER BY '.$sortfield.' '.$sortorder;
+$sql .= ' AND c.fk_statut = 1';
+
+$sql.= ' GROUP BY c.rowid ORDER BY '.$sortfield.' '.$sortorder;
 $sql.= $db->plimit($limit + 1,$offset);
 
 //echo $sql; exit;
@@ -276,19 +368,23 @@ if ($resql)
 	if (! empty($moreforfilter))
 	{
 	    print '<tr class="liste_titre">';
-	    print '<td class="liste_titre" colspan="9">';
+	    print '<td class="liste_titre" colspan="12">';
 	    print $moreforfilter;
 	    print '</td></tr>';
 	}
 
 	print '<tr class="liste_titre">';
-	print_liste_field_titre($langs->trans('Ref'),$_SERVER["PHP_SELF"],'c.ref','',$param,'width="25%"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Ref'),$_SERVER["PHP_SELF"],'c.ref','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('RefCustomerOrder'),$_SERVER["PHP_SELF"],'c.ref_client','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Company'),$_SERVER["PHP_SELF"],'s.nom','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('OrderDate'),$_SERVER["PHP_SELF"],'c.date_commande','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('DeliveryDate'),$_SERVER["PHP_SELF"],'c.date_livraison','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('AmountHT'),$_SERVER["PHP_SELF"],'c.total_ht','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print '</tr>';
 	print '<tr class="liste_titre">';
 	print '<td class="liste_titre">';
@@ -301,6 +397,10 @@ if ($resql)
 	print '<input class="flat" type="text" name="snom" value="'.$snom.'">';
 	print '</td>';
 	print '<td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td align="right" class="liste_titre">';
@@ -398,7 +498,16 @@ if ($resql)
 
 		// Statut
 		print '<td align="right" class="nowrap">'.$generic_commande->LibStatut($objp->fk_statut,$objp->facturee,5).'</td>';
-
+	
+		//Quantité de produit
+		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
+		//Etat du stock : en stock / hors stock
+		print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
+		//Stock réel
+		print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
+		//Stock Théorique
+		print '<td align="right" class="nowrap">'.etatStockTheorique($objp->rowid,$objp->socid).'</td>';
+		
 		print '</tr>';
 
 		$total+=$objp->total_ht;
@@ -420,6 +529,28 @@ if ($resql)
 	print '</table>';
 
 	print '</form>';
+	
+	?>
+	<br>
+	<table>
+		<tr>
+			<td colspan="2">Légende :</td>
+		</tr>
+		<tr>
+			<td><?=  img_picto('', 'statut4.png');?></td>
+			<td>En stock - commande expédiable</td>
+		</tr>
+		<tr>
+			<td><?=  img_picto('En Stock', 'statut1.png');?></td>
+			<td>Stock prochainement insufisant</td>
+		</tr>
+		<tr>
+			<td><?=  img_picto('En Stock', 'statut8.png');?></td>
+			<td>Stock insufisant - commande non expédiable</td>
+		</tr>
+	</table>
+	
+	<?php
 
 	$db->free($resql);
 }
