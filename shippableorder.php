@@ -78,18 +78,31 @@ function getStockReel($idcommande){
 	$commande->fetch($idcommande);
 	$commande->fetch_lines(true); //only product
 	
-	$stockreel = 0;
+	$nblignesnonexpe = 0;
+	$aumoinune = false;
 	
 	foreach($commande->lines as $line){
 		$produit = new Product($db);
 		$produit->fetch($line->fk_product);
 		
 		$produit->load_stock();
-		if($produit->stock_reel < $line->qty)
-			return false;
+		if($produit->stock_reel < $line->qty){
+			$nblignesnonexpe += 1;
+		}
+		else{
+			$aumoinune = true;
+		}
 	}
 	
-	return true;	
+	if($aumoinune && ($nblignesnonexpe != 0)){
+		return 2; //partiellement expédiable
+	}
+	elseif (count($commande->lines) == $nblignesnonexpe) {
+		return 0; //non expédiable 
+	}
+	else {
+		return 1; //expédiable
+	}	
 	
 }
 
@@ -146,10 +159,12 @@ function etatStock($idcommande,$socid){
 
 function etatStockReel($idcommande,$socid){
 	
-	if(getStockReel($idcommande))
+	if(getStockReel($idcommande) == 1)
 		return img_picto('En Stock', 'statut4.png');
-	else 
+	elseif(getStockReel($idcommande) == 0) 
 		return img_picto('Hors Stock', 'statut8.png');
+	else
+		return img_picto('Partiellement en Stock', 'statut1.png');
 }
 
 function etatStockTheorique($idcommande,$socid){
@@ -368,7 +383,7 @@ if ($resql)
 	if (! empty($moreforfilter))
 	{
 	    print '<tr class="liste_titre">';
-	    print '<td class="liste_titre" colspan="12">';
+	    print '<td class="liste_titre" colspan="9">';
 	    print $moreforfilter;
 	    print '</td></tr>';
 	}
@@ -383,8 +398,8 @@ if ($resql)
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	//print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	//print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print '</tr>';
 	print '<tr class="liste_titre">';
 	print '<td class="liste_titre">';
@@ -401,8 +416,8 @@ if ($resql)
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
+	//print '</td><td class="liste_titre">&nbsp;';
+	//print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td align="right" class="liste_titre">';
 	print '<input type="image" class="liste_titre" name="button_search" src="'.DOL_URL_ROOT.'/theme/'.$conf->theme.'/img/search.png"  value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
 	print '</td></tr>';
@@ -504,9 +519,9 @@ if ($resql)
 		//Etat du stock : en stock / hors stock
 		print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
 		//Stock réel
-		print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
+		//print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
 		//Stock Théorique
-		print '<td align="right" class="nowrap">'.etatStockTheorique($objp->rowid,$objp->socid).'</td>';
+		//print '<td align="right" class="nowrap">'.etatStockTheorique($objp->rowid,$objp->socid).'</td>';
 		
 		print '</tr>';
 
@@ -538,11 +553,11 @@ if ($resql)
 		</tr>
 		<tr>
 			<td><?=  img_picto('', 'statut4.png');?></td>
-			<td>En stock - commande expédiable</td>
+			<td>En stock - commande totalement expédiable</td>
 		</tr>
 		<tr>
 			<td><?=  img_picto('En Stock', 'statut1.png');?></td>
-			<td>Stock prochainement insufisant</td>
+			<td>Stock partiellement expédiable</td>
 		</tr>
 		<tr>
 			<td><?=  img_picto('En Stock', 'statut8.png');?></td>
