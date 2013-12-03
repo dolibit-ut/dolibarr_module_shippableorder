@@ -44,7 +44,7 @@ class modShippableorder extends DolibarrModules
 
 		// Id for module (must be unique).
 		// Use here a free id (See in Home -> System information -> Dolibarr for list of used modules id).
-		$this->numero = 123456;
+		$this->numero = 104050;
 		// Key text used to identify module (for permissions, menus, etc...)
 		$this->rights_class = 'shippableorder';
 
@@ -56,7 +56,7 @@ class modShippableorder extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Liste les commandes client expédiables";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '1.1';
+		$this->version = '0.1';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
