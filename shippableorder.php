@@ -81,12 +81,15 @@ function getStockReel($idcommande){
 	$nblignesnonexpe = 0;
 	$aumoinune = false;
 	
+	$TSomme = array();
+	
 	foreach($commande->lines as $line){
+		$TSomme[$line->fk_product] += $line->qty;
 		$produit = new Product($db);
 		$produit->fetch($line->fk_product);
 		
 		$produit->load_stock();
-		if($produit->stock_reel < $line->qty){
+		if($produit->stock_reel < $line->qty || $TSomme[$line->fk_product] > $produit->stock_reel){
 			$nblignesnonexpe += 1;
 		}
 		else{
