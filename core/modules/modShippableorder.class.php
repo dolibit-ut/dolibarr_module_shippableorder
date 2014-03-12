@@ -247,7 +247,7 @@ class modShippableorder extends DolibarrModules
 								'langs'=>'shippableorder@shippableorder',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1,
 								'enabled'=>'$conf->shippableorder->enabled',	// Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled.
-								'perms'=>'$user->rights->expedition->1->lire',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
+								'perms'=>'$user->rights->expedition->lire',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		$r++;
