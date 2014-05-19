@@ -1,0 +1,8 @@
+# Dolibarr language file - en_US
+CHARSET=UTF-8
+
+ShippableOrders=Shippable orders list
+QtyProd=Total product qty 
+RealStock=Real Stock
+TheoricStock=Theoric Stock
+InStock=Shippable

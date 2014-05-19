@@ -73,10 +73,8 @@ $viewstatut=GETPOST('viewstatut');
 
 function getStockReel($idcommande){
 	global $db;
-	
 	$commande = new Commande($db);
 	$commande->fetch($idcommande);
-	$commande->fetch_lines(true); //only product
 	
 	$nblignesnonexpe = 0;
 	$aumoinune = false;
@@ -84,17 +82,23 @@ function getStockReel($idcommande){
 	$TSomme = array();
 	
 	foreach($commande->lines as $line){
-		$TSomme[$line->fk_product] += $line->qty;
-		$produit = new Product($db);
-		$produit->fetch($line->fk_product);
 		
-		$produit->load_stock();
-		if($produit->stock_reel < $line->qty || $TSomme[$line->fk_product] > $produit->stock_reel){
-			$nblignesnonexpe += 1;
+		if($line->product_type==0 && $line->fk_product>0) {
+			
+			$TSomme[$line->fk_product] += $line->qty;
+			$produit = new Product($db);
+			$produit->fetch($line->fk_product);
+			
+			$produit->load_stock();
+			if($produit->stock_reel < $line->qty || $TSomme[$line->fk_product] > $produit->stock_reel){
+				$nblignesnonexpe += 1;
+			}
+			else{
+				$aumoinune = true;
+			}
+			
 		}
-		else{
-			$aumoinune = true;
-		}
+		
 	}
 	
 	if($aumoinune && ($nblignesnonexpe != 0)){
