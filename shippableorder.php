@@ -76,41 +76,36 @@ function getStockReel($idcommande){
 	$commande = new Commande($db);
 	$commande->fetch($idcommande);
 	
-	$nblignesnonexpe = 0;
-	$aumoinune = false;
+	$nbExpediable = 0;
+	$nbProduit = 0;
 	
 	$TSomme = array();
 	
 	foreach($commande->lines as $line){
 		
 		if($line->product_type==0 && $line->fk_product>0) {
+			$nbProduit++;
 			
 			$TSomme[$line->fk_product] += $line->qty;
+			
 			$produit = new Product($db);
 			$produit->fetch($line->fk_product);
 			
 			$produit->load_stock();
-			if($produit->stock_reel < $line->qty || $TSomme[$line->fk_product] > $produit->stock_reel){
-				$nblignesnonexpe += 1;
-			}
-			else{
-				$aumoinune = true;
-			}
 			
+			if($TSomme[$line->fk_product] < $produit->stock_reel) {
+				$nbExpediable++;
+			}
 		}
-		
 	}
 	
-	if($aumoinune && ($nblignesnonexpe != 0)){
-		return 2; //partiellement expédiable
+	if($nbExpediable == 0) {
+		return 0;
+	} else if ($nbExpediable == $nbProduit) {
+		return 1;
+	} else {
+		return 2;
 	}
-	elseif (count($commande->lines) == $nblignesnonexpe) {
-		return 0; //non expédiable 
-	}
-	else {
-		return 1; //expédiable
-	}	
-	
 }
 
 function getStockTheorique($idcommande,$socid){
