@@ -1,8 +1,14 @@
-# Dolibarr language file - en_US
-CHARSET=UTF-8
+Module104050Name = Shippable orders
+Module104050Desc = Shippable order list according to product stock
 
 ShippableOrders=Shippable orders list
 QtyProd=Total product qty 
 RealStock=Real Stock
 TheoricStock=Theoric Stock
 InStock=Shippable
+ShippableStatus=Shippable status
+NbProductShippable=%s product shippable on %s
+NbProductShippableShort=%s / %s
+EnStock=In stock %s
+HorsStock=Out of stock %s
+StockPartiel=Partially in stock %s

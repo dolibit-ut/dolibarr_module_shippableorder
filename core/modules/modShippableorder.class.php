@@ -65,6 +65,11 @@ class modShippableorder extends DolibarrModules
 		// If file is in theme/yourtheme/img directory under name object_pictovalue.png, use this->picto='pictovalue'
 		// If file is in module/img directory under name object_pictovalue.png, use this->picto='pictovalue@module'
 		$this->picto='shippableorder.png@shippableorder';
+		
+		$this->module_parts = array(
+			'hooks'=>array('ordercard')
+			,'tpl'=>1
+		);
 
 		$this->dirs = array();
 
@@ -75,7 +80,7 @@ class modShippableorder extends DolibarrModules
 		$this->const=array();
 		
 		// Dependencies
-		$this->depends = array("modExpedition");		// List of modules id that must be enabled if this module is enabled
+		$this->depends = array("modStock", "modCommande");		// List of modules id that must be enabled if this module is enabled
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(3,4);	// Minimum version of Dolibarr required by module
@@ -111,7 +116,7 @@ class modShippableorder extends DolibarrModules
 								'langs'=>'shippableorder@shippableorder',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
 								'position'=>1,
 								'enabled'=>'$conf->shippableorder->enabled',	// Define condition to show or hide menu entry. Use '$conf->mymodule->enabled' if entry must be visible if module is enabled.
-								'perms'=>'$user->rights->expedition->lire',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
+								'perms'=>'$user->rights->commande->lire',			                // Use 'perms'=>'$user->rights->mymodule->level1->level2' if you want your menu with a permission rules
 								'target'=>'',
 								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
 		$r++;

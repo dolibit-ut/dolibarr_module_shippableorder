@@ -1,8 +1,14 @@
-# Dolibarr language file - fr_FR
-CHARSET=UTF-8
+Module104050Name = Commandes expédiables
+Module104050Desc = Liste des commandes expédiables en fonction du stock de produit
 
 ShippableOrders=Liste des commandes expédiables
 QtyProd=Qté Totale de Produits
 RealStock=Stock Réel
 TheoricStock=Stock Théorique
 InStock=Expédiable
+ShippableStatus=Statut d'expédition
+NbProductShippable=%s produit expédiables sur %s
+NbProductShippableShort=%s / %s
+EnStock=En stock %s
+HorsStock=Hors stock %s
+StockPartiel=Partiellement en stock %s

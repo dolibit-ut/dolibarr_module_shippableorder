@@ -1,5 +1,5 @@
 <?php
-class ActionsAsset
+class ActionsShippableorder
 { 
      /** Overloading the doActions function : replacing the parent's function with the one below 
       *  @param      parameters  meta datas of the hook (context, etc...) 
@@ -10,14 +10,15 @@ class ActionsAsset
       
     function formObjectOptions($parameters, &$object, &$action, $hookmanager) 
     {  
-      	global $db;
-		/*echo '<pre>';
-		print_r($object);
-		echo '</pre>';exit;*/
+      	global $db, $langs;
 		
 		if (in_array('ordercard',explode(':',$parameters['context']))) 
         {
-        	
+        	dol_include_once('/shippableorder/class/shippableorder.class.php');
+        	$shippableOrder = new ShippableOrder();
+        	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
+			echo '<td>'.$shippableOrder->orderStockStatus($object->id,false).'</td></tr>';
+			$object->shippableorder = $shippableOrder;
         }
 
 		return 0;
@@ -51,10 +52,13 @@ class ActionsAsset
 	function printObjectLine ($parameters, &$object, &$action, $hookmanager){
 		
 		global $db;
-
+echo 'test';
 		if (in_array('ordercard',explode(':',$parameters['context']))) 
         {
-        	
+        	dol_include_once('/shippableorder/class/shippableorder.class.php');
+        	$shippableOrder = new ShippableOrder();
+        	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
+			echo '<td>'.$shippableOrder->orderStockStatus($object).'</td></tr>';
         }
 
 		return 0;

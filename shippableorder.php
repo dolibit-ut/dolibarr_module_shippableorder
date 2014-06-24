@@ -33,6 +33,7 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+dol_include_once('/shippableorder/class/shippableorder.class.php');
 
 $langs->load('orders');
 $langs->load('deliveries');
@@ -71,7 +72,7 @@ $limit = $conf->liste_limit;
 $viewstatut=GETPOST('viewstatut');
 
 
-function getStockReel($idcommande){
+/*function getStockReel($idcommande){
 	global $db;
 	$commande = new Commande($db);
 	$commande->fetch($idcommande);
@@ -175,7 +176,7 @@ function etatStockTheorique($idcommande,$socid){
 		return img_picto('En Stock', 'statut4.png');
 	else 
 		return img_picto('Hors Stock', 'statut1.png');
-}
+}*/
 
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
@@ -429,6 +430,7 @@ if ($resql)
 	$subtotal=0;
 
 	$generic_commande = new Commande($db);
+	$shippableOrder = new ShippableOrder();
 	while ($i < min($num,$limit))
 	{
 		$objp = $db->fetch_object($resql);
@@ -519,7 +521,7 @@ if ($resql)
 		//Quantité de produit
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
 		//Etat du stock : en stock / hors stock
-		print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
+		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus($objp->rowid).'</td>';
 		//Stock réel
 		//print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
 		//Stock Théorique
