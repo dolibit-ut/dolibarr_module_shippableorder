@@ -628,9 +628,10 @@ if ($resql)
 		
 		// TEnt_comm[] : clef = id_commande val = id_entrepot
 		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($res2->rowid,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
-		
+		/*echo strtotime($objp->date_livraison);exit;
+		echo dol_now();exit;*/
 		//Checkbox pour créer expédition
-		$checked = $shippableOrder->is_ok_for_shipping($objp->rowid) ? 'checked="checked"' : '';
+		$checked = $shippableOrder->is_ok_for_shipping($objp->rowid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
 		
 		print '<td align="right" class="nowrap">'.'<input class="butAction" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
 		
