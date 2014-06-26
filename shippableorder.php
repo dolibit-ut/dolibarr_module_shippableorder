@@ -33,7 +33,9 @@ require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
+dol_include_once('/expedition/class/expedition.class.php');
 dol_include_once('/shippableorder/class/shippableorder.class.php');
+dol_include_once('/product/class/html.formproduct.class.php');
 
 $langs->load('orders');
 $langs->load('deliveries');
@@ -185,6 +187,86 @@ $hookmanager->initHooks(array('orderlist'));
  * Actions
  */
 
+$action = $_REQUEST['action'];
+
+switch ($action) {
+	case 'createShipping':
+		
+		/*echo "<pre>";
+		print_r($_REQUEST);
+		echo "</pre>";
+		exit;*/
+		$TIDCommandes = $_REQUEST['TIDCommandes'];
+		$TEnt_comm = $_REQUEST['TEnt_comm'];
+		if(empty($_REQUEST['button_search_x']) && empty($_REQUEST['button_search_y'])) {
+			
+			if(_createShipping($db, $TIDCommandes, $TEnt_comm))
+				setEventMessage("Expéditions créées avec succès !");
+			
+		}
+		
+		break;
+	
+	default:
+		
+		break;
+}
+
+/***********************************************************************************************************************
+ *************************************************Fonctions*************************************************************
+ **********************************************************************************************************************/
+
+/**
+ * Crée automatiquement les expéditions
+ * @param array $TIDCommandes : contient la liste des identifiants des commandes sélectionnées
+ * @param array $TEnt_comm : contient en clef les identifiants des commandes et en valeur les identifiants des entrepots à partir desquels on veut faire l'expédition (les entrepots qui seron déstockés)
+ * @return int >1 : ok, <1 : ko 
+ */ 
+
+function _createShipping($db, $TIDCommandes, $TEnt_comm) {
+		
+	global $user;
+	
+	if(count($TIDCommandes) > 0) {
+		
+		foreach($TIDCommandes as $id_commande) {
+			
+			$commande = new Commande($db);
+			$commande->fetch($id_commande);
+			
+			/*echo "<pre>";
+			print_r($commande);
+			echo "</pre>";
+			exit;*/
+			
+			$shipping = new Expedition($db);
+			$shipping->origin = 'commande';
+			$shipping->origin_id = $id_commande;
+			
+			$shipping->weight_units = 0;
+			$shipping->weight = 0;
+			$shipping->size = 0;
+			$shipping->sizeW = 0;
+			$shipping->sizeH = 0;
+			$shipping->sizeS = 0;
+			$shipping->size_units = 0;
+			$shipping->socid = $commande->socid;
+			
+			foreach($commande->lines as $line_commande) {
+				
+				//function addline($entrepot_id, $id, $qty)
+				$shipping->addline($TEnt_comm[$commande->id], $line_commande->rowid, $line_commande->qty);
+				
+			}
+			
+			return $shipping->create($user);
+			
+		}
+		
+	}
+	
+}
+ 
 $parameters=array('socid'=>$socid);
 $reshook=$hookmanager->executeHooks('doActions',$parameters,$object,$action);    // Note that $action and $object may have been modified by some hook
 
@@ -204,9 +286,9 @@ if (GETPOST("button_removefilter_x"))
     $deliveryyear='';
 }
 
-/*
- * View
- */
+/***********************************************************************************************************************
+ ***************************************************View****************************************************************
+ **********************************************************************************************************************/
 
 $now=dol_now();
 
@@ -388,6 +470,8 @@ if ($resql)
 	    print '<tr class="liste_titre">';
 	    print '<td class="liste_titre" colspan="9">';
 	    print $moreforfilter;
+		print '</td><td>';
+		print '</td><td>';
 	    print '</td></tr>';
 	}
 
@@ -401,6 +485,8 @@ if ($resql)
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Warehouse'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Créer expédition'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	//print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	//print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print '</tr>';
@@ -419,6 +505,8 @@ if ($resql)
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
+	print '</td><td class="liste_titre">&nbsp;';
 	//print '</td><td class="liste_titre">&nbsp;';
 	//print '</td><td class="liste_titre">&nbsp;';
 	print '</td><td align="right" class="liste_titre">';
@@ -431,6 +519,7 @@ if ($resql)
 
 	$generic_commande = new Commande($db);
 	$shippableOrder = new ShippableOrder();
+	$formproduct = new FormProduct($db);
 	while ($i < min($num,$limit))
 	{
 		$objp = $db->fetch_object($resql);
@@ -520,8 +609,31 @@ if ($resql)
 	
 		//Quantité de produit
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
+		
 		//Etat du stock : en stock / hors stock
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus($objp->rowid).'</td>';
+		/*print "<pre>";
+		print_r($objp);
+		print "</pre>";
+		exit;*/
+		
+		// Sélection de l'entrepot à déstocker pour l'expédition
+		// On met par défaut le premier entrepot créé
+		$sql2 = "SELECT rowid";
+		$sql2.= " FROM ".MAIN_DB_PREFIX."entrepot";
+		$sql2.= " ORDER BY rowid ASC";
+		$sql2.= " LIMIT 1";
+		$resql2 = $db->query($sql2);
+		$res2 = $db->fetch_object($resql2);
+		
+		// TEnt_comm[] : clef = id_commande val = id_entrepot
+		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($res2->rowid,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
+		
+		//Checkbox pour créer expédition
+		$checked = $shippableOrder->is_ok_for_shipping($objp->rowid) ? 'checked="checked"' : '';
+		
+		print '<td align="right" class="nowrap">'.'<input class="butAction" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
+		
 		//Stock réel
 		//print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
 		//Stock Théorique
@@ -546,6 +658,10 @@ if ($resql)
 	}
 
 	print '</table>';
+	
+	print '<input type="hidden" name="action" value="createShipping"/>';
+	
+	print '<br /><input style="float:right" class="butAction" type="SUBMIT" name="subCreateShip" value="'.$langs->trans('Créer les expéditions').'" />';
 
 	print '</form>';
 	

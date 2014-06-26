@@ -77,6 +77,20 @@ class ShippableOrder
 		return $txt;
 	}
 	
+	function is_ok_for_shipping($idOrder){
+		global $langs;
+		
+		$isShippable = $this->isOrderShippable($idOrder);
+		
+		if($isShippable['nbProduct'] == $isShippable['nbShippable'])
+			return true;
+		elseif($isShippable['nbShippable'] == 0)
+			return false;
+		else
+			return false;
+
+	}
+	
 	function orderLineStockStatus($line){
 		global $langs;
 		
