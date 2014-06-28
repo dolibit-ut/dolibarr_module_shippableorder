@@ -112,10 +112,10 @@ class ShippableOrder
 			$pictopath = img_picto('', 'statut4.png', '', false, 1);
 			$infos = $langs->trans('EnStock', $isShippable['stock']);
 		} elseif($isShippable['shippable'] == 0) {
-			$pictopath = img_picto('', 'statut8.png');
+			$pictopath = img_picto('', 'statut8.png', '', false, 1);
 			$infos = $langs->trans('HorsStock', $isShippable['stock']);
 		} else {
-			$pictopath = img_picto('', 'statut1.png');
+			$pictopath = img_picto('', 'statut1.png', '', false, 1);
 			$infos = $langs->trans('StockPartiel', $isShippable['stock']);
 		}
 		
