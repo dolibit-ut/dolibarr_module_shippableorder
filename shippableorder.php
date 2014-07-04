@@ -391,7 +391,7 @@ if ($search_user > 0)
     $sql.= " AND ec.fk_c_type_contact = tc.rowid AND tc.element='commande' AND tc.source='internal' AND ec.element_id = c.rowid AND ec.fk_socpeople = ".$search_user;
 }
 
-$sql .= ' AND c.fk_statut = 1';
+$sql .= ' AND c.fk_statut IN (1,2)';
 
 $sql.= ' GROUP BY c.rowid ORDER BY '.$sortfield.' '.$sortorder;
 $sql.= $db->plimit($limit + 1,$offset);

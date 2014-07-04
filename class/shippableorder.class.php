@@ -10,6 +10,7 @@ class ShippableOrder
 		
 		$order = new Commande($db);
 		$order->fetch($idOrder);
+		$order->loadExpeditions();
 		
 		$nbShippable = 0;
 		$nbProduct = 0;
@@ -19,6 +20,10 @@ class ShippableOrder
 			
 			if($line->product_type==0 && $line->fk_product>0) {
 				$nbProduct++;
+				
+				// Prise en compte des quantité déjà expédiées
+				$qtyAlreadyShipped = $order->expeditions[$line->id];
+				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
 				
 				$isshippable = $this->isLineShippable($line, $TSomme);
 				if($isshippable == 1) {
@@ -85,7 +90,7 @@ class ShippableOrder
 	function isLineShippable(&$line, &$TSomme) {
 		global $db;
 		
-		$TSomme[$line->fk_product] += $line->qty;
+		$TSomme[$line->fk_product] += $line->qty_toship;
 		
 		if(!isset($line->stock)) {
 			$produit = new Product($db);
@@ -97,13 +102,16 @@ class ShippableOrder
 		
 		if($line->stock <= 0) {
 			$isShippable = 0;
+			$qtyShippable = 0;
 		} else if ($TSomme[$line->fk_product] < $line->stock) {
 			$isShippable = 1;
+			$qtyShippable = $line->qty_toship;
 		} else {
 			$isShippable = 2;
+			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $line->stock;
 		}
 		
-		$this->TlinesShippable[$line->id] = array('stock'=>$line->stock,'shippable'=>$isShippable);
+		$this->TlinesShippable[$line->id] = array('stock'=>$line->stock,'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
 		
 		return $isShippable;
 	}
@@ -152,14 +160,22 @@ class ShippableOrder
 			return '';
 		}
 		
-		$txt = '';
-		if($isShippable['shippable'] == 1)
-			$txt .= img_picto($langs->trans('EnStock', '('.$isShippable['stock'].')'), 'statut4.png');
-		elseif($isShippable['shippable'] == 0)
-			$txt .= img_picto($langs->trans('HorsStock', '('.$isShippable['stock'].')'), 'statut8.png');
-		else
-			$txt .= img_picto($langs->trans('StockPartiel', '('.$isShippable['stock'].')'), 'statut1.png');
+		if($isShippable['shippable'] == 1) {
+			$pictopath = img_picto('', 'statut4.png', '', false, 1);
+			$infos = $langs->trans('EnStock', $isShippable['stock']);
+		} elseif($isShippable['shippable'] == 0) {
+			$pictopath = img_picto('', 'statut8.png', '', false, 1);
+			$infos = $langs->trans('HorsStock', $isShippable['stock']);
+		} else {
+			$pictopath = img_picto('', 'statut1.png', '', false, 1);
+			$infos = $langs->trans('StockPartiel', $isShippable['stock']);
+		}
 		
-		return $txt;
+		$infos.= "\n".$langs->trans('RemainToShip', $isShippable['to_ship']);
+		$infos.= "\n".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
+		
+		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
+		
+		return $picto;
 	}
 }

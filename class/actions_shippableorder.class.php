@@ -12,53 +12,13 @@ class ActionsShippableorder
     {  
       	global $db, $langs;
 		
-		if (in_array('ordercard',explode(':',$parameters['context']))) 
+		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
         {
         	dol_include_once('/shippableorder/class/shippableorder.class.php');
         	$shippableOrder = new ShippableOrder();
         	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
 			echo '<td>'.$shippableOrder->orderStockStatus($object->id,false).'</td></tr>';
 			$object->shippableorder = $shippableOrder;
-        }
-
-		return 0;
-
-	}
-     
-    function formEditProductOptions($parameters, &$object, &$action, $hookmanager) 
-    {
-    	global $db;
-
-    	if (in_array('ordercard',explode(':',$parameters['context'])))
-        {
-        	
-        }
-		
-        return 0;
-    }
-
-	function formAddObjectLine ($parameters, &$object, &$action, $hookmanager) {
-		
-		global $db;
-
-		if (in_array('ordercard',explode(':',$parameters['context']))) 
-        {
-        	
-        }
-
-		return 0;
-	}
-
-	function printObjectLine ($parameters, &$object, &$action, $hookmanager){
-		
-		global $db;
-echo 'test';
-		if (in_array('ordercard',explode(':',$parameters['context']))) 
-        {
-        	dol_include_once('/shippableorder/class/shippableorder.class.php');
-        	$shippableOrder = new ShippableOrder();
-        	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
-			echo '<td>'.$shippableOrder->orderStockStatus($object).'</td></tr>';
         }
 
 		return 0;
