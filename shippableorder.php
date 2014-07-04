@@ -200,8 +200,9 @@ switch ($action) {
 		$TEnt_comm = $_REQUEST['TEnt_comm'];
 		if(empty($_REQUEST['button_search_x']) && empty($_REQUEST['button_search_y'])) {
 			
-			if(_createShipping($db, $TIDCommandes, $TEnt_comm))
-				setEventMessage("Expéditions créées avec succès !");
+			$order = new ShippableOrder();
+			
+			$order->createShipping($db, $TIDCommandes, $TEnt_comm);
 			
 		}
 		
@@ -255,7 +256,7 @@ function _createShipping($db, $TIDCommandes, $TEnt_comm) {
 			foreach($commande->lines as $line_commande) {
 				
 				//function addline($entrepot_id, $id, $qty)
-				$shipping->addline($TEnt_comm[$commande->id], $line_commande->rowid, $line_commande->qty);
+				$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $line_commande->qty);
 				
 			}
 			

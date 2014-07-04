@@ -30,6 +30,58 @@ class ShippableOrder
 		return array('nbProduct'=>$nbProduct, 'nbShippable'=>$nbShippable);
 	}
 	
+	function createShipping($db, $TIDCommandes, $TEnt_comm) {
+			
+		global $user;
+		
+		dol_include_once('/expedition/class/expedition.class.php');
+		
+		$nbShippingCreated = 0;
+		
+		if(count($TIDCommandes) > 0) {
+			
+			foreach($TIDCommandes as $id_commande) {
+				
+				$commande = new Commande($db);
+				$commande->fetch($id_commande);
+				$this->isOrderShippable($commande->id);
+
+				$shipping = new Expedition($db);
+				$shipping->origin = 'commande';
+				$shipping->origin_id = $id_commande;
+				
+				$shipping->weight_units = 0;
+				$shipping->weight = 0;
+				$shipping->size = 0;
+				$shipping->sizeW = 0;
+				$shipping->sizeH = 0;
+				$shipping->sizeS = 0;
+				$shipping->size_units = 0;
+				$shipping->socid = $commande->socid;
+				
+				foreach($commande->lines as $line_commande) {
+					
+					if($this->TlinesShippable[$line_commande->id]['stock'] > 0) {
+
+						$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $this->TlinesShippable[$line_commande->id]['stock']);
+
+					}
+					
+				}
+				
+				$nbShippingCreated++;
+				$shipping->create($user);
+				
+			}
+			
+			if($nbShippingCreated > 0) {
+				setEventMessage($nbShippingCreated." expédition(s) créée(s)");
+			}
+			
+		}
+		
+	}
+	
 	function isLineShippable(&$line, &$TSomme) {
 		global $db;
 		
