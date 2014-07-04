@@ -17,13 +17,13 @@ class ShippableOrder
 		$nbProduct = 0;
 		
 		$TSomme = array();
-		foreach($order->lines as $line){
+		foreach($this->order->lines as $line){
 			
 			if($line->product_type==0 && $line->fk_product>0) {
 				$nbProduct++;
 				
 				// Prise en compte des quantité déjà expédiées
-				$qtyAlreadyShipped = $order->expeditions[$line->id];
+				$qtyAlreadyShipped = $this->order->expeditions[$line->id];
 				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
 				
 				$isshippable = $this->isLineShippable($line, $TSomme);
@@ -151,10 +151,10 @@ class ShippableOrder
 				$shipping->size_units = 0;
 				$shipping->socid = $this->order->socid;
 				
-				foreach($this->order->lines as $line_commande) {
+				foreach($this->order->lines as $line) {
 					
-					if($this->TlinesShippable[$line_commande->id]['stock'] > 0) {
-						$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $this->TlinesShippable[$line_commande->id]['stock']);
+					if($this->TlinesShippable[$line->id]['stock'] > 0) {
+						$shipping->addline($TEnt_comm[$this->order->id], $line->id, $this->TlinesShippable[$line->id]['stock']);
 					}
 				}
 				
