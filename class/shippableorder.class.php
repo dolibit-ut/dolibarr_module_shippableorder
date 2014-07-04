@@ -3,14 +3,15 @@ class ShippableOrder
 {
 	function __construct () {
 		$this->TlinesShippable = array();
+		$this->order = null;
 	}
 	
 	function isOrderShippable($idOrder){
 		global $db;
 		
-		$order = new Commande($db);
-		$order->fetch($idOrder);
-		$order->loadExpeditions();
+		$this->order = new Commande($db);
+		$this->order->fetch($idOrder);
+		$this->order->loadExpeditions();
 		
 		$nbShippable = 0;
 		$nbProduct = 0;
@@ -33,58 +34,6 @@ class ShippableOrder
 		}
 		
 		return array('nbProduct'=>$nbProduct, 'nbShippable'=>$nbShippable);
-	}
-	
-	function createShipping($db, $TIDCommandes, $TEnt_comm) {
-			
-		global $user;
-		
-		dol_include_once('/expedition/class/expedition.class.php');
-		
-		$nbShippingCreated = 0;
-		
-		if(count($TIDCommandes) > 0) {
-			
-			foreach($TIDCommandes as $id_commande) {
-				
-				$commande = new Commande($db);
-				$commande->fetch($id_commande);
-				$this->isOrderShippable($commande->id);
-
-				$shipping = new Expedition($db);
-				$shipping->origin = 'commande';
-				$shipping->origin_id = $id_commande;
-				
-				$shipping->weight_units = 0;
-				$shipping->weight = 0;
-				$shipping->size = 0;
-				$shipping->sizeW = 0;
-				$shipping->sizeH = 0;
-				$shipping->sizeS = 0;
-				$shipping->size_units = 0;
-				$shipping->socid = $commande->socid;
-				
-				foreach($commande->lines as $line_commande) {
-					
-					if($this->TlinesShippable[$line_commande->id]['stock'] > 0) {
-
-						$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $this->TlinesShippable[$line_commande->id]['stock']);
-
-					}
-					
-				}
-				
-				$nbShippingCreated++;
-				$shipping->create($user);
-				
-			}
-			
-			if($nbShippingCreated > 0) {
-				setEventMessage($nbShippingCreated." expédition(s) créée(s)");
-			}
-			
-		}
-		
 	}
 	
 	function isLineShippable(&$line, &$TSomme) {
@@ -137,20 +86,6 @@ class ShippableOrder
 		return $txt;
 	}
 	
-	function is_ok_for_shipping($idOrder){
-		global $langs;
-		
-		$isShippable = $this->isOrderShippable($idOrder);
-		
-		if($isShippable['nbProduct'] == $isShippable['nbShippable'])
-			return true;
-		elseif($isShippable['nbShippable'] == 0)
-			return false;
-		else
-			return false;
-
-	}
-	
 	function orderLineStockStatus($line){
 		global $langs;
 		
@@ -177,5 +112,59 @@ class ShippableOrder
 		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
 		
 		return $picto;
+	}
+	
+	function is_ok_for_shipping($idOrder){
+		$isShippable = $this->isOrderShippable($idOrder);
+		
+		if($isShippable['nbProduct'] == $isShippable['nbShippable']) return true;
+		
+		return false;
+	}
+	
+	/**
+	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
+	 */
+	function createShipping($db, $TIDCommandes, $TEnt_comm) {
+		global $user, $langs;
+		
+		dol_include_once('/expedition/class/expedition.class.php');
+		
+		$nbShippingCreated = 0;
+		
+		if(count($TIDCommandes) > 0) {
+			
+			foreach($TIDCommandes as $id_commande) {
+				
+				$this->isOrderShippable($id_commande);
+
+				$shipping = new Expedition($db);
+				$shipping->origin = 'commande';
+				$shipping->origin_id = $id_commande;
+				
+				$shipping->weight_units = 0;
+				$shipping->weight = 0;
+				$shipping->size = 0;
+				$shipping->sizeW = 0;
+				$shipping->sizeH = 0;
+				$shipping->sizeS = 0;
+				$shipping->size_units = 0;
+				$shipping->socid = $this->order->socid;
+				
+				foreach($this->order->lines as $line_commande) {
+					
+					if($this->TlinesShippable[$line_commande->id]['stock'] > 0) {
+						$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $this->TlinesShippable[$line_commande->id]['stock']);
+					}
+				}
+				
+				$nbShippingCreated++;
+				$shipping->create($user);
+			}
+			
+			if($nbShippingCreated > 0) {
+				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
+			}
+		}
 	}
 }

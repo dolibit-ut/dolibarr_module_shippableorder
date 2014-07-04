@@ -14,3 +14,4 @@ HorsStock=Out of stock : %s
 StockPartiel=Partially in stock : %s
 RemainToShip=Remain to ship : %s
 QtyShippable=Quantité shippable : %s
+NbShippingCreated=%s shipment(s) created

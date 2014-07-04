@@ -14,3 +14,4 @@ HorsStock=Hors stock : %s
 StockPartiel=Partiellement en stock : %s
 RemainToShip=Reste à expédier : %s
 QtyShippable=Quantité expédiable : %s
+NbShippingCreated=%s expédition(s) créée(s)
