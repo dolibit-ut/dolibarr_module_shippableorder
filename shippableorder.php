@@ -488,7 +488,7 @@ if ($resql)
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Warehouse'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	print_liste_field_titre($langs->trans('Créer expédition'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('CreateShipment'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	//print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	//print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print '</tr>';
@@ -675,16 +675,20 @@ if ($resql)
 			<td colspan="2">Légende :</td>
 		</tr>
 		<tr>
-			<td><?=  img_picto('', 'statut4.png');?></td>
-			<td>En stock - commande totalement expédiable</td>
+			<td><?php echo img_picto('', 'statut4.png');?></td>
+			<td><?php echo $langs->trans('LegendEnStock') ?></td>
 		</tr>
 		<tr>
-			<td><?=  img_picto('En Stock', 'statut1.png');?></td>
-			<td>Stock partiellement expédiable</td>
+			<td><?php echo  img_picto('En Stock', 'statut1.png');?></td>
+			<td><?php echo $langs->trans('LegendStockPartiel') ?></td>
 		</tr>
 		<tr>
-			<td><?=  img_picto('En Stock', 'statut8.png');?></td>
-			<td>Stock insufisant - commande non expédiable</td>
+			<td><?php echo  img_picto('En Stock', 'statut8.png');?></td>
+			<td><?php echo $langs->trans('LegendHorsStock') ?></td>
+		</tr>
+		<tr>
+			<td><?php echo  img_picto('En Stock', 'statut5.png');?></td>
+			<td><?php echo $langs->trans('LegendAlreadyShipped') ?></td>
 		</tr>
 	</table>
 	
