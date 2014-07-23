@@ -67,8 +67,8 @@ if ($page == -1) { $page = 0; }
 $offset = $conf->liste_limit * $page;
 $pageprev = $page - 1;
 $pagenext = $page + 1;
-if (! $sortfield) $sortfield='c.rowid';
-if (! $sortorder) $sortorder='DESC';
+if (! $sortfield) $sortfield='c.date_livraison';
+if (! $sortorder) $sortorder='ASC';
 $limit = $conf->liste_limit;
 
 $viewstatut=GETPOST('viewstatut');
