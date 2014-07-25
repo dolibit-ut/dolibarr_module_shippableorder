@@ -54,8 +54,8 @@ if ($page == -1) { $page = 0; }
 $offset = $conf->liste_limit * $page;
 $pageprev = $page - 1;
 $pagenext = $page + 1;
-if (! $sortfield) $sortfield='c.rowid';
-if (! $sortorder) $sortorder='DESC';
+if (! $sortfield) $sortfield='c.date_livraison';
+if (! $sortorder) $sortorder='ASC';
 $limit = $conf->liste_limit;
 
 $viewstatut=GETPOST('viewstatut');
@@ -178,7 +178,8 @@ $help_url="EN:Module_Customers_Orders|FR:Module_Commandes_Clients|ES:Módulo_Ped
 llxHeader('',$langs->trans("ShippableOrders"),$help_url);
 
 $sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
-$sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee, (SELECT SUM(qty) FROM '.MAIN_DB_PREFIX.'commandedet WHERE fk_commande = c.rowid) as qty_prod';
+$sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+$sql.= ' (SELECT SUM(qty) FROM '.MAIN_DB_PREFIX.'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
 $sql.= ' FROM '.MAIN_DB_PREFIX.'societe as s';
 $sql.= ', '.MAIN_DB_PREFIX.'commande as c';
 $sql.= ', '.MAIN_DB_PREFIX.'commandedet as cd';
