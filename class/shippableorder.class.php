@@ -130,7 +130,7 @@ class ShippableOrder
 		}
 		
 		$infos = $langs->trans('Stock', $isShippable['stock']);
-		$infos.= $langs->trans('RemainToShip', $isShippable['to_ship']);
+		$infos.= "\n".$langs->trans('RemainToShip', $isShippable['to_ship']);
 		$infos.= "\n".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
 		
 		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
