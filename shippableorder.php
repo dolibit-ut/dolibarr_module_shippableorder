@@ -1,11 +1,5 @@
 <?php
-/* Copyright (C) 2001-2005 Rodolphe Quiedeville   <rodolphe@quiedeville.org>
- * Copyright (C) 2004-2012 Laurent Destailleur    <eldy@users.sourceforge.net>
- * Copyright (C) 2005      Marc Barilley / Ocebo  <marc@ocebo.com>
- * Copyright (C) 2005-2012 Regis Houssin          <regis.houssin@capnetworks.com>
- * Copyright (C) 2012      Juanjo Menent          <jmenent@2byte.es>
- * Copyright (C) 2013      Christophe Battarel    <christophe.battarel@altairis.fr>
- * Copyright (C) 2013      Cédric Salvador        <csalvador@gpcsolutions.fr>
+/* Copyright (C) 2013 ATM Consulting <support@atm-consulting.fr>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,13 +14,6 @@
  * You should have received a copy of the GNU General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
-/**
- *	\file       htdocs/commande/liste.php
- *	\ingroup    commande
- *	\brief      Page to list orders
- */
-
 
 require 'config.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
@@ -73,113 +60,6 @@ $limit = $conf->liste_limit;
 
 $viewstatut=GETPOST('viewstatut');
 
-
-/*function getStockReel($idcommande){
-	global $db;
-	$commande = new Commande($db);
-	$commande->fetch($idcommande);
-	
-	$nbExpediable = 0;
-	$nbProduit = 0;
-	
-	$TSomme = array();
-	
-	foreach($commande->lines as $line){
-		
-		if($line->product_type==0 && $line->fk_product>0) {
-			$nbProduit++;
-			
-			$TSomme[$line->fk_product] += $line->qty;
-			
-			$produit = new Product($db);
-			$produit->fetch($line->fk_product);
-			
-			$produit->load_stock();
-			
-			if($TSomme[$line->fk_product] < $produit->stock_reel) {
-				$nbExpediable++;
-			}
-		}
-	}
-	
-	if($nbExpediable == 0) {
-		return 0;
-	} else if ($nbExpediable == $nbProduit) {
-		return 1;
-	} else {
-		return 2;
-	}
-}
-
-function getStockTheorique($idcommande,$socid){
-	global $db,$conf;
-	
-	$commande = new Commande($db);
-	$commande->fetch($idcommande);
-	$commande->fetch_lines(true); //only product
-	
-	$stocktheorique = 0;
-	
-	foreach($commande->lines as $line){
-		$produit = new Product($db);
-		$produit->fetch($line->fk_product);
-		$produit->load_stock();
-		
-		//echo $produit->stock_reel.' *** <br>';
-		// Calculating a theorical value of stock if stock increment is done on real sending
-		if (! empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT))
-		{
-			$stock_commande_client=$stock_commande_fournisseur=0;
-
-			if (! empty($conf->commande->enabled))
-			{
-				$result=$produit->load_stats_commande(0,'1,2');
-				if ($result < 0) dol_print_error($db,$produit->error);
-				$stock_commande_client=$produit->stats_commande['qty'];
-			}
-			if (! empty($conf->fournisseur->enabled))
-			{
-				$result=$produit->load_stats_commande_fournisseur(0,'3');
-				if ($result < 0) dol_print_error($db,$produit->error);
-				$stock_commande_fournisseur=$produit->stats_commande_fournisseur['qty'];
-			}
-
-			$stocktheorique = $product->stock_reel-($stock_commande_client+$stock_sending_client)+$stock_commande_fournisseur;
-			
-			if($line->qty > $stocktheorique)
-				return false;
-		}
-	}
-	
-	return true;
-}
-
-function etatStock($idcommande,$socid){
-	
-	if(getStockReel($idcommande) && getStockTheorique($idcommande,$socid))
-		return img_picto('En Stock', 'statut4.png');
-	else 
-		return img_picto('Hors Stock', 'statut8.png');
-}
-
-function etatStockReel($idcommande,$socid){
-	
-	if(getStockReel($idcommande) == 1)
-		return img_picto('En Stock', 'statut4.png');
-	elseif(getStockReel($idcommande) == 0) 
-		return img_picto('Hors Stock', 'statut8.png');
-	else
-		return img_picto('Partiellement en Stock', 'statut1.png');
-}
-
-function etatStockTheorique($idcommande,$socid){
-	
-	if(getStockTheorique($idcommande,$socid))
-		return img_picto('En Stock', 'statut4.png');
-	else 
-		return img_picto('Hors Stock', 'statut1.png');
-}*/
-
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
 
@@ -192,10 +72,6 @@ $action = $_REQUEST['action'];
 switch ($action) {
 	case 'createShipping':
 		
-		/*echo "<pre>";
-		print_r($_REQUEST);
-		echo "</pre>";
-		exit;*/
 		$TIDCommandes = $_REQUEST['TIDCommandes'];
 		$TEnt_comm = $_REQUEST['TEnt_comm'];
 		if(empty($_REQUEST['button_search_x']) && empty($_REQUEST['button_search_y'])) {
