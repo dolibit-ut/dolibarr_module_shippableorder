@@ -61,7 +61,7 @@ class ShippableOrder
 		if($line->stock <= 0 || $line->qty_toship <= 0) {
 			$isShippable = 0;
 			$qtyShippable = 0;
-		} else if ($TSomme[$line->fk_product] < $line->stock) {
+		} else if ($TSomme[$line->fk_product] <= $line->stock) {
 			$isShippable = 1;
 			$qtyShippable = $line->qty_toship;
 		} else {
