@@ -63,7 +63,7 @@ $viewstatut=GETPOST('viewstatut');
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
 
-/*
+/**
  * Actions
  */
 
@@ -89,60 +89,10 @@ switch ($action) {
 		break;
 }
 
-/***********************************************************************************************************************
- *************************************************Fonctions*************************************************************
- **********************************************************************************************************************/
 
 /**
- * Crée automatiquement les expéditions
- * @param array $TIDCommandes : contient la liste des identifiants des commandes sélectionnées
- * @param array $TEnt_comm : contient en clef les identifiants des commandes et en valeur les identifiants des entrepots à partir desquels on veut faire l'expédition (les entrepots qui seron déstockés)
- * @return int >1 : ok, <1 : ko 
- */ 
-
-function _createShipping($db, $TIDCommandes, $TEnt_comm) {
-		
-	global $user;
-	
-	if(count($TIDCommandes) > 0) {
-		
-		foreach($TIDCommandes as $id_commande) {
-			
-			$commande = new Commande($db);
-			$commande->fetch($id_commande);
-			
-			/*echo "<pre>";
-			print_r($commande);
-			echo "</pre>";
-			exit;*/
-			
-			$shipping = new Expedition($db);
-			$shipping->origin = 'commande';
-			$shipping->origin_id = $id_commande;
-			
-			$shipping->weight_units = 0;
-			$shipping->weight = 0;
-			$shipping->size = 0;
-			$shipping->sizeW = 0;
-			$shipping->sizeH = 0;
-			$shipping->sizeS = 0;
-			$shipping->size_units = 0;
-			$shipping->socid = $commande->socid;
-			
-			foreach($commande->lines as $line_commande) {
-				
-				//function addline($entrepot_id, $id, $qty)
-				$shipping->addline($TEnt_comm[$commande->id], $line_commande->id, $line_commande->qty);
-				
-			}
-			
-			return $shipping->create($user);
-			
-		}
-		
-	}
-	
-}
+ * View
+ */
  
 $parameters=array('socid'=>$socid);
 $reshook=$hookmanager->executeHooks('doActions',$parameters,$object,$action);    // Note that $action and $object may have been modified by some hook

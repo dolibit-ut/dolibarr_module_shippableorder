@@ -14,6 +14,7 @@ TotallyShipped=Totalement expédiée ou en cours d'expédition
 EnStock=En stock
 HorsStock=Hors stock
 StockPartiel=Partiellement en stock
+QtyInStock=Stock : %s
 RemainToShip=Reste à expédier : %s
 QtyShippable=Quantité expédiable : %s
 NbShippingCreated=%s expédition(s) créée(s)
