@@ -57,7 +57,7 @@ class ShippableOrder
 			if(empty($this->TProduct[$line->fk_product])) {
 				$produit = new Product($db);
 				$produit->fetch($line->fk_product);
-				$produit->load_stock();
+				$produit->load_stock(false);
 				$this->TProduct[$line->fk_product] = $produit;
 			} else {
 				$produit = &$this->TProduct[$line->fk_product];
