@@ -440,7 +440,8 @@ if ($resql)
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
 		
 		//Etat du stock : en stock / hors stock
-		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus($objp->rowid).'</td>';
+		$shippableOrder->isOrderShippable($objp->rowid);
+		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
 		/*print "<pre>";
 		print_r($objp);
 		print "</pre>";
@@ -460,7 +461,7 @@ if ($resql)
 		/*echo strtotime($objp->date_livraison);exit;
 		echo dol_now();exit;*/
 		//Checkbox pour créer expédition
-		$checked = $shippableOrder->is_ok_for_shipping($objp->rowid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+		$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
 		
 		print '<td align="right" class="nowrap">'.'<input class="butAction" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
 		

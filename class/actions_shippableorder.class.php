@@ -16,8 +16,9 @@ class ActionsShippableorder
         {
         	dol_include_once('/shippableorder/class/shippableorder.class.php');
         	$shippableOrder = new ShippableOrder();
+			$shippableOrder->isOrderShippable($object->id);
         	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
-			echo '<td>'.$shippableOrder->orderStockStatus($object->id,false).'</td></tr>';
+			echo '<td>'.$shippableOrder->orderStockStatus(false).'</td></tr>';
 			$object->shippableorder = $shippableOrder;
         }
 

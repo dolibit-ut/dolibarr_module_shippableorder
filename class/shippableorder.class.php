@@ -4,6 +4,11 @@ class ShippableOrder
 	function __construct () {
 		$this->TlinesShippable = array();
 		$this->order = null;
+		$this->nbProduct = 0;
+		$this->nbShippable = 0;
+		$this->nbPartiallyShippable = 0;
+		
+		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
 	}
 	
 	function isOrderShippable($idOrder){
@@ -13,9 +18,9 @@ class ShippableOrder
 		$this->order->fetch($idOrder);
 		$this->order->loadExpeditions();
 		
-		$nbShippable = 0;
-		$nbPartiallyShippable = 0;
-		$nbProduct = 0;
+		$this->nbShippable = 0;
+		$this->nbPartiallyShippable = 0;
+		$this->nbProduct = 0;
 		
 		$TSomme = array();
 		foreach($this->order->lines as $line){
@@ -29,20 +34,18 @@ class ShippableOrder
 				
 				// Expédiable si toute la quantité est expédiable
 				if($isshippable == 1) {
-					$nbShippable++;
+					$this->nbShippable++;
 				}
 				
 				if($isshippable == 2) {
-					$nbPartiallyShippable++;
+					$this->nbPartiallyShippable++;
 				}
 				
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
-					$nbProduct++;
+					$this->nbProduct++;
 				}
 			}
 		}
-		
-		return array('nbProduct'=>$nbProduct, 'nbShippable'=>$nbShippable, 'nbPartiallyShippable'=>$nbPartiallyShippable);
 	}
 	
 	function isLineShippable(&$line, &$TSomme) {
@@ -51,10 +54,14 @@ class ShippableOrder
 		$TSomme[$line->fk_product] += $line->qty_toship;
 		
 		if(!isset($line->stock)) {
-			$produit = new Product($db);
-			$produit->fetch($line->fk_product);
-			
-			$produit->load_stock();
+			if(empty($this->TProduct[$line->fk_product])) {
+				$produit = new Product($db);
+				$produit->fetch($line->fk_product);
+				$produit->load_stock();
+				$this->TProduct[$line->fk_product] = $produit;
+			} else {
+				$produit = &$this->TProduct[$line->fk_product];
+			}
 			$line->stock = $produit->stock_reel;
 		}
 		
@@ -74,19 +81,18 @@ class ShippableOrder
 		return $isShippable;
 	}
 	
-	function orderStockStatus($idOrder,$short=true){
+	function orderStockStatus($short=true){
 		global $langs;
 		
-		$isShippable = $this->isOrderShippable($idOrder);
 		$txt = '';
 		
-		if($isShippable['nbProduct'] == 0)
+		if($this->nbProduct == 0)
 			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
-		else if($isShippable['nbProduct'] == $isShippable['nbShippable'])
+		else if($this->nbProduct == $this->nbShippable)
 			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
-		else if($isShippable['nbPartiallyShippable'] > 0)
+		else if($this->nbPartiallyShippable > 0)
 			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-		else if($isShippable['nbShippable'] == 0)
+		else if($this->nbShippable == 0)
 			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
 		else
 			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
@@ -94,12 +100,7 @@ class ShippableOrder
 		$label = 'NbProductShippable';
 		if($short) $label = 'NbProductShippableShort';
 		
-		$txt .= ' '.$langs->trans($label, $isShippable['nbShippable'], $isShippable['nbProduct']);
-		
-		/*if($isShippable['nbPartiallyShippable'] > 0) {
-			$txt .= "<br>".img_picto($langs->trans('StockPartiel'), 'statut1.png');
-			$txt .= ' '.$langs->trans('NbProductPartiallyShippable', $isShippable['nbPartiallyShippable'], $isShippable['nbProduct']);
-		}*/
+		$txt .= ' '.$langs->trans($label, $this->nbShippable, $this->nbProduct);
 		
 		return $txt;
 	}
@@ -138,10 +139,8 @@ class ShippableOrder
 		return $picto;
 	}
 	
-	function is_ok_for_shipping($idOrder){
-		$isShippable = $this->isOrderShippable($idOrder);
-		
-		if($isShippable['nbProduct'] == $isShippable['nbShippable'] && $isShippable['nbShippable'] != 0) return true;
+	function is_ok_for_shipping(){
+		if($this->nbProduct == $this->nbShippable && $this->nbShippable != 0) return true;
 		
 		return false;
 	}
