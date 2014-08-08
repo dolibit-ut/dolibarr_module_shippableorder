@@ -58,8 +58,6 @@ if (! $sortfield) $sortfield='c.date_livraison';
 if (! $sortorder) $sortorder='ASC';
 $limit = $conf->liste_limit;
 
-$viewstatut=GETPOST('viewstatut');
-
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
 
@@ -71,15 +69,12 @@ $action = $_REQUEST['action'];
 
 switch ($action) {
 	case 'createShipping':
-		
-		$TIDCommandes = $_REQUEST['TIDCommandes'];
-		$TEnt_comm = $_REQUEST['TEnt_comm'];
-		if(empty($_REQUEST['button_search_x']) && empty($_REQUEST['button_search_y'])) {
+		if(!empty($_REQUEST['subCreateShip'])) {
+			$TIDCommandes = $_REQUEST['TIDCommandes'];
+			$TEnt_comm = $_REQUEST['TEnt_comm'];
 			
 			$order = new ShippableOrder();
-			
 			$order->createShipping($db, $TIDCommandes, $TEnt_comm);
-			
 		}
 		
 		break;
@@ -100,13 +95,11 @@ $reshook=$hookmanager->executeHooks('doActions',$parameters,$object,$action);   
 // Do we click on purge search criteria ?
 if (GETPOST("button_removefilter_x"))
 {
-    $search_categ='';
     $search_user='';
     $search_sale='';
-    $search_ref='';
-    $search_refcustomer='';
-    $search_societe='';
-    $search_montant_ht='';
+    $sref='';
+    $sref_client='';
+    $snom='';
     $orderyear='';
     $ordermonth='';
     $deliverymonth='';
@@ -151,32 +144,6 @@ if ($sref) {
 if ($sall)
 {
 	$sql .= natural_search(array('c.ref', 'c.note_private'), $sall);
-}
-if ($viewstatut <> '')
-{
-	if ($viewstatut < 4 && $viewstatut > -3)
-	{
-		if ($viewstatut == 1 && empty($conf->expedition->enabled)) $sql.= ' AND c.fk_statut IN (1,2)';	// If module expedition disabled, we include order with status 'sending in process' into 'validated'
-		else $sql.= ' AND c.fk_statut = '.$viewstatut; // brouillon, validee, en cours, annulee
-		if ($viewstatut == 3)
-		{
-			$sql.= ' AND c.facture = 0'; // need to create invoice
-		}
-	}
-	if ($viewstatut == 4)
-	{
-		$sql.= ' AND c.facture = 1'; // invoice created
-	}
-	if ($viewstatut == -2)	// To process
-	{
-		//$sql.= ' AND c.fk_statut IN (1,2,3) AND c.facture = 0';
-		$sql.= " AND ((c.fk_statut IN (1,2)) OR (c.fk_statut = 3 AND c.facture = 0))";    // If status is 2 and facture=1, it must be selected
-	}
-	if ($viewstatut == -3)	// To bill
-	{
-		$sql.= ' AND c.fk_statut in (1,2,3)';
-		$sql.= ' AND c.facture = 0'; // invoice not created
-	}
 }
 if ($ordermonth > 0)
 {
@@ -234,30 +201,14 @@ if ($resql)
 	{
 		$soc = new Societe($db);
 		$soc->fetch($socid);
-		$title = $langs->trans('ListOfOrders') . ' - '.$soc->nom;
+		$title = $langs->trans('ShippableOrders') . ' - '.$soc->nom;
 	}
 	else
 	{
-		$title = $langs->trans('ListOfOrders');
+		$title = $langs->trans('ShippableOrders');
 	}
-	if (strval($viewstatut) == '0')
-	$title.=' - '.$langs->trans('StatusOrderDraftShort');
-	if ($viewstatut == 1)
-	$title.=' - '.$langs->trans('StatusOrderValidatedShort');
-	if ($viewstatut == 2)
-	$title.=' - '.$langs->trans('StatusOrderOnProcessShort');
-	if ($viewstatut == 3)
-	$title.=' - '.$langs->trans('StatusOrderToBillShort');
-	if ($viewstatut == 4)
-	$title.=' - '.$langs->trans('StatusOrderProcessedShort');
-	if ($viewstatut == -1)
-	$title.=' - '.$langs->trans('StatusOrderCanceledShort');
-	if ($viewstatut == -2)
-	$title.=' - '.$langs->trans('StatusOrderToProcessShort');
-	if ($viewstatut == -3)
-	$title.=' - '.$langs->trans('StatusOrderValidated').', '.(empty($conf->expedition->enabled)?'':$langs->trans("StatusOrderSent").', ').$langs->trans('StatusOrderToBill');
 
-	$param='&socid='.$socid.'&viewstatut='.$viewstatut;
+	$param='&socid='.$socid;
 	if ($ordermonth)      $param.='&ordermonth='.$ordermonth;
 	if ($orderyear)       $param.='&orderyear='.$orderyear;
 	if ($deliverymonth)   $param.='&deliverymonth='.$deliverymonth;
@@ -274,7 +225,6 @@ if ($resql)
 
 	// Lignes des champs de filtre
 	print '<form method="GET" action="'.$_SERVER["PHP_SELF"].'">';
-	print '<input type="hidden" name="viewstatut" value="'.$viewstatut.'">';
 
 	print '<table class="noborder" width="100%">';
 
@@ -316,8 +266,7 @@ if ($resql)
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Warehouse'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('CreateShipment'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	//print_liste_field_titre($langs->trans('RealStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	//print_liste_field_titre($langs->trans('TheoricStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+
 	print '</tr>';
 	print '<tr class="liste_titre">';
 	print '<td class="liste_titre">';
@@ -329,18 +278,19 @@ if ($resql)
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" name="snom" value="'.$snom.'">';
 	print '</td>';
-	print '<td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td class="liste_titre">&nbsp;';
-	//print '</td><td class="liste_titre">&nbsp;';
-	//print '</td><td class="liste_titre">&nbsp;';
-	print '</td><td align="right" class="liste_titre">';
-	print '<input type="image" class="liste_titre" name="button_search" src="'.DOL_URL_ROOT.'/theme/'.$conf->theme.'/img/search.png"  value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
-	print '</td></tr>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre" align="right">';
+	print '<input type="image" class="liste_titre" name="button_search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
+	print '&nbsp; ';
+	print '<input type="image" class="liste_titre" name="button_removefilter" src="'.img_picto($langs->trans("Search"),'searchclear.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'" title="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'">';
+	print '</td>';
+	print '</tr>';
 
 	$var=true;
 	$total=0;
@@ -361,11 +311,11 @@ if ($resql)
 
 		print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 		print '<td class="nobordernopadding nowrap">';
-		print $generic_commande->getNomUrl(1,($viewstatut != 2?0:$objp->fk_statut));
+		print $generic_commande->getNomUrl(1);
 		print '</td>';
 
 		print '<td style="min-width: 20px" class="nobordernopadding nowrap">';
-		if (($objp->fk_statut > 0) && ($objp->fk_statut < 3) && $db->jdate($objp->date_valid) < ($now - $conf->commande->client->warning_delay)) print img_picto($langs->trans("Late"),"warning");
+		if (($objp->fk_statut > 0) && ($objp->fk_statut < 3) && max($db->jdate($objp->date_commande),$db->jdate($objp->date_livraison)) < ($now - $conf->commande->client->warning_delay)) print img_picto($langs->trans("Late"),"warning");
 		if(!empty($objp->note_private))
 		{
 			print ' <span class="note">';
@@ -492,7 +442,7 @@ if ($resql)
 	
 	print '<input type="hidden" name="action" value="createShipping"/>';
 	
-	print '<br /><input style="float:right" class="butAction" type="SUBMIT" name="subCreateShip" value="'.$langs->trans('Créer les expéditions').'" />';
+	print '<br /><input style="float:right" class="butAction" type="submit" name="subCreateShip" value="'.$langs->trans('CreateShipmentButton').'" />';
 
 	print '</form>';
 	

@@ -4,6 +4,7 @@ Module104050Desc = Shippable order list according to product stock
 ShippableOrders=Shippable orders list
 QtyProd=Total product qty 
 CreateShipment=Ship.
+CreateShipmentButton=Create shipments
 RealStock=Real Stock
 TheoricStock=Theoric Stock
 InStock=Shippable
@@ -18,6 +19,7 @@ QtyInStock=Stock : %s
 RemainToShip=Remain to ship : %s
 QtyShippable=Quantité shippable : %s
 NbShippingCreated=%s shipment(s) created
+NoOrderSelected=No order selected
 
 LegendEnStock = Stock OK - Order totally shippable
 LegendStockPartiel = Partial stock - Order shippable partially

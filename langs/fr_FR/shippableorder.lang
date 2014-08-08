@@ -4,6 +4,7 @@ Module104050Desc = Liste des commandes expédiables en fonction du stock de prod
 ShippableOrders=Liste des commandes expédiables
 QtyProd=Qté produits
 CreateShipment=Exp.
+CreateShipmentButton=Créer les expéditions
 RealStock=Stock Réel
 TheoricStock=Stock Théorique
 InStock=Expédiable
@@ -18,6 +19,7 @@ QtyInStock=Stock : %s
 RemainToShip=Reste à expédier : %s
 QtyShippable=Quantité expédiable : %s
 NbShippingCreated=%s expédition(s) créée(s)
+NoOrderSelected=Aucune commande sélectionnée
 
 LegendEnStock = En stock - Commande totalement expédiable
 LegendStockPartiel = Stock partiel - Commande partiellement expédiable

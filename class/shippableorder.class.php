@@ -164,13 +164,15 @@ class ShippableOrder
 				$shipping = new Expedition($db);
 				$shipping->origin = 'commande';
 				$shipping->origin_id = $id_commande;
+				$shipping->date_delivery = $this->order->date_livraison;
+				$shipping->note_public = $this->order->note_public;
+				$shipping->note_private = $this->order->note_private;
 				
 				$shipping->weight_units = 0;
-				$shipping->weight = 0;
-				$shipping->size = 0;
-				$shipping->sizeW = 0;
-				$shipping->sizeH = 0;
-				$shipping->sizeS = 0;
+				$shipping->weight = "NULL";
+				$shipping->sizeW = "NULL";
+				$shipping->sizeH = "NULL";
+				$shipping->sizeS = "NULL";
 				$shipping->size_units = 0;
 				$shipping->socid = $this->order->socid;
 				
@@ -187,7 +189,11 @@ class ShippableOrder
 			
 			if($nbShippingCreated > 0) {
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
+				header("Location: ".dol_buildpath('/expedition/liste.php',2));
+				exit;
 			}
+		} else {
+			setEventMessage($langs->trans('NoOrderSelected'), 'warnings');
 		}
 	}
 }
