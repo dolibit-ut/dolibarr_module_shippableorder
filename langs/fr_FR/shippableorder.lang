@@ -1,6 +1,7 @@
 Module104050Name = Commandes expédiables
 Module104050Desc = Liste des commandes expédiables en fonction du stock de produit
 
+ShippableOrdersMenu=Commandes expédiables
 ShippableOrders=Liste des commandes expédiables
 QtyProd=Qté produits
 CreateShipment=Exp.

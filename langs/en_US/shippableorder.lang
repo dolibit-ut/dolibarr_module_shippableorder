@@ -1,6 +1,7 @@
 Module104050Name = Shippable orders
 Module104050Desc = Shippable order list according to product stock
 
+ShippableOrdersMenu=Shippable orders
 ShippableOrders=Shippable orders list
 QtyProd=Total product qty 
 CreateShipment=Ship.

@@ -109,7 +109,7 @@ class modShippableorder extends DolibarrModules
 
 		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=commercial,fk_leftmenu=orders',			                // Put 0 if this is a top menu
 								'type'=>'left',			                // This is a Top menu entry
-								'titre'=>'Liste expédiables',
+								'titre'=>'ShippableOrdersMenu',
 								'mainmenu'=>'orders',
 								'leftmenu'=>'shipableorder',
 								'url'=>'/shippableorder/shippableorder.php',
