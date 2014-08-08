@@ -343,19 +343,6 @@ if ($resql)
 		$companystatic->client=$objp->client;
 		print '<td>';
 		print $companystatic->getNomUrl(1,'customer');
-
-		// If module invoices enabled and user with invoice creation permissions
-		if (! empty($conf->facture->enabled) && ! empty($conf->global->ORDER_BILLING_ALL_CUSTOMER))
-		{
-			if ($user->rights->facture->creer)
-			{
-				if (($objp->fk_statut > 0 && $objp->fk_statut < 3) || ($objp->fk_statut == 3 && $objp->facturee == 0))
-				{
-					print '&nbsp;<a href="'.DOL_URL_ROOT.'/commande/orderstoinvoice.php?socid='.$companystatic->id.'">';
-					print img_picto($langs->trans("CreateInvoiceForThisCustomer").' : '.$companystatic->nom, 'object_bill', 'hideonsmartphone').'</a>';
-				}
-			}
-		}
 		print '</td>';
 
 		// Order date
@@ -392,10 +379,6 @@ if ($resql)
 		//Etat du stock : en stock / hors stock
 		$shippableOrder->isOrderShippable($objp->rowid);
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
-		/*print "<pre>";
-		print_r($objp);
-		print "</pre>";
-		exit;*/
 		
 		// Sélection de l'entrepot à déstocker pour l'expédition
 		// On met par défaut le premier entrepot créé
@@ -415,27 +398,11 @@ if ($resql)
 		
 		print '<td align="right" class="nowrap">'.'<input class="butAction" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
 		
-		//Stock réel
-		//print '<td align="right" class="nowrap">'.etatStockReel($objp->rowid,$objp->socid).'</td>';
-		//Stock Théorique
-		//print '<td align="right" class="nowrap">'.etatStockTheorique($objp->rowid,$objp->socid).'</td>';
-		
 		print '</tr>';
 
 		$total+=$objp->total_ht;
 		$subtotal+=$objp->total_ht;
 		$i++;
-	}
-
-	if (! empty($conf->global->MAIN_SHOW_TOTAL_FOR_LIMITED_LIST))
-	{
-		$var=!$var;
-		print '<tr '.$bc[$var].'>';
-		print '<td class="nowrap" colspan="5">'.$langs->trans('TotalHT').'</td>';
-		// Total HT
-		print '<td align="right" class="nowrap">'.price($total).'</td>';
-		print '<td class="nowrap">&nbsp;</td>';
-		print '</tr>';
 	}
 
 	print '</table>';
