@@ -122,10 +122,17 @@ llxHeader('',$langs->trans("ShippableOrders"),$help_url);
 
 $sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
 $sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+if($conf->clinomadic->enabled){
+	$sql .= " ce.reglement_recu,";
+}
+
 $sql.= ' (SELECT SUM(qty) FROM '.MAIN_DB_PREFIX.'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
 $sql.= ' FROM '.MAIN_DB_PREFIX.'societe as s';
 $sql.= ', '.MAIN_DB_PREFIX.'commande as c';
 $sql.= ', '.MAIN_DB_PREFIX.'commandedet as cd';
+if($conf->clinomadic->enabled){
+	$sql .= " LEFT JOIN ".MAIN_DB_PREFIX."commande_extrafields as ce ON (ce.fk_object = cd.fk_commande)";
+}
 // We'll need this table joined to the select in order to filter by sale
 if ($search_sale > 0 || (! $user->rights->societe->client->voir && ! $socid)) $sql .= ", ".MAIN_DB_PREFIX."societe_commerciaux as sc";
 if ($search_user > 0)
@@ -256,6 +263,7 @@ if ($resql)
 
 	print '<tr class="liste_titre">';
 	print_liste_field_titre($langs->trans('Ref'),$_SERVER["PHP_SELF"],'c.ref','',$param,'',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Règlement'),$_SERVER["PHP_SELF"],'c.ref_client','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('RefCustomerOrder'),$_SERVER["PHP_SELF"],'c.ref_client','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Company'),$_SERVER["PHP_SELF"],'s.nom','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('OrderDate'),$_SERVER["PHP_SELF"],'c.date_commande','',$param, 'align="right"',$sortfield,$sortorder);
@@ -333,6 +341,11 @@ if ($resql)
 		print '</tr></table>';
 
 		print '</td>';
+		
+		// Payer : oui/non spécific Nomadic
+		if($conf->clinomadic->enabled){
+			print '<td align="center" class="nowrap" style="color:red;font-weight:bold;">'.$objp->reglement_recu.'</td>';
+		}
 
 		// Ref customer
 		print '<td>'.$objp->ref_client.'</td>';
