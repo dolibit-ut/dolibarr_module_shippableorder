@@ -44,8 +44,47 @@ class ShippableOrder
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
 					$this->nbProduct++;
 				}
+				
+				$this->loadStock($line->fk_product);
 			}
 		}
+	}
+	
+	function loadStock($fk_product){
+		global $db;
+		
+		$product = new Product($db);
+		$product->fetch($fk_product);
+		
+		$product->load_stock();
+		$product->load_virtual_stock();
+		
+		$this->TProduct[$product->id] = $product;
+	}
+	
+	function printStockStatus(){
+		global $db;
+		dol_include_once('/product/stock/class/entrepot.class.php');
+		
+		$stock_neuf=$stock_theorique=$stock_real=0;
+		/*echo '<pre>';
+		print_r($this->TProduct);
+		echo '</pre>';*/
+		foreach ($this->TProduct as $idprod => $product) {
+			
+			$entrepot = new Entrepot($db);
+			$entrepot->fetch('','Neuf');
+			
+			$stock_neuf += $product->stock_warehouse[$entrepot->id]->real;
+			$stock_theorique += $product->stock_theorique;
+			$stock_real += $product->stock_reel;
+			
+			$chaine = "Neuf: ".$stock_neuf;
+			$chaine .= "<br>Théorique: ".$stock_theorique;
+			$chaine .= "<br>Réel: ".$stock_real;
+		}
+		
+		return $chaine;
 	}
 	
 	function isLineShippable(&$line, &$TSomme) {

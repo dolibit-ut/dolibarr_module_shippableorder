@@ -254,7 +254,7 @@ if ($resql)
 	if (! empty($moreforfilter))
 	{
 	    print '<tr class="liste_titre">';
-	    print '<td class="liste_titre" colspan="9">';
+	    print '<td class="liste_titre" colspan="11">';
 	    print $moreforfilter;
 		print '</td><td>';
 		print '</td><td>';
@@ -272,6 +272,7 @@ if ($resql)
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('Stocks'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Warehouse'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('CreateShipment'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 
@@ -286,6 +287,8 @@ if ($resql)
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" name="snom" value="'.$snom.'">';
 	print '</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
@@ -344,7 +347,7 @@ if ($resql)
 		
 		// Payer : oui/non spécific Nomadic
 		if($conf->clinomadic->enabled){
-			print '<td align="center" class="nowrap" style="color:red;font-weight:bold;">'.$objp->reglement_recu.'</td>';
+			print '<td align="center" class="nowrap" style="font-weight:bold;">'.ucfirst(($objp->reglement_recu == 0) ? "Non" : $objp->reglement_recu ).'</td>';
 		}
 
 		// Ref customer
@@ -389,9 +392,14 @@ if ($resql)
 		//Quantité de produit
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
 		
-		//Etat du stock : en stock / hors stock
+		//Expédiable
 		$shippableOrder->isOrderShippable($objp->rowid);
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
+		
+		if($conf->clinomadic->enabled){
+			//Etat du stock : théorique, physique + "Neuf" => spécifique Nomadic
+			print '<td align="right" class="nowrap">'.$shippableOrder->printStockStatus().'</td>';
+		}
 		
 		// Sélection de l'entrepot à déstocker pour l'expédition
 		// On met par défaut le premier entrepot créé
