@@ -21,6 +21,8 @@ RemainToShip=Reste à expédier : %s
 QtyShippable=Quantité expédiable : %s
 NbShippingCreated=%s expédition(s) créée(s)
 NoOrderSelected=Aucune commande sélectionnée
+ShippableOrderSetup=Configuration du module
+StockEntrepot=Entrepôts dont le stock est à prendre en compte (entrepot1;entrepot2,entrepot3)
 
 LegendEnStock = En stock - Commande totalement expédiable
 LegendStockPartiel = Stock partiel - Commande partiellement expédiable

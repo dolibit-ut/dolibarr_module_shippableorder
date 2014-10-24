@@ -85,7 +85,8 @@ class modShippableorder extends DolibarrModules
 		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
 		$this->need_dolibarr_version = array(3,4);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("shippableorder@shippableorder");
-
+		$this->config_page_url = array("shippableorder_setup.php@shippableorder");
+		
 	
         // Dictionnaries
         $this->dictionnaries=array();
@@ -101,7 +102,7 @@ class modShippableorder extends DolibarrModules
 		$r=0;
 
 		
-
+	
 
 		// Main menu entries
 		$this->menus = array();			// List of menus to add

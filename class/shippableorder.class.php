@@ -44,50 +44,13 @@ class ShippableOrder
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
 					$this->nbProduct++;
 				}
-				
-				//$this->loadStock($line->fk_product);
+
 			}
 		}
 	}
 	
-	/*function loadStock($fk_product){
-		global $db;
-		
-		$product = new Product($db);
-		$product->fetch($fk_product);
-		
-		$product->load_stock();
-		$product->load_virtual_stock();
-		
-		$this->TProduct[$product->id] = $product;
-	}*/
-	
-	function printStockStatus(){
-		global $db;
-		dol_include_once('/product/stock/class/entrepot.class.php');
-		
-		$stock_neuf=$stock_theorique=$stock_real=0;
-		
-		//TODO mettre en conf entrepotS
-		$entrepot = new Entrepot($db);
-		$entrepot->fetch('','Neuf');
-
-		foreach ($this->TProduct as $idprod => $product) {
-			
-			$stock_neuf += $product->stock_warehouse[$entrepot->id]->real;
-			$stock_theorique += $product->stock_theorique;
-			$stock_real += $product->stock_reel;
-			
-			$chaine = "Neuf: ".$stock_neuf;
-			$chaine .= "<br>Théorique: ".$stock_theorique;
-			$chaine .= "<br>Réel: ".$stock_real;
-		}
-		
-		return $chaine;
-	}
-	
 	function isLineShippable(&$line, &$TSomme) {
-		global $db;
+		global $db,$conf;
 		
 		$TSomme[$line->fk_product] += $line->qty_toship;
 		
@@ -101,6 +64,21 @@ class ShippableOrder
 				$produit = &$this->TProduct[$line->fk_product];
 			}
 			$line->stock = $produit->stock_reel;
+			
+			//Filtrer stock uniquement des entrepôts en conf
+			if($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE){				
+				$PDOdb = new TPDOdb;
+				$line->stock = 0;
+				//Récupération des entrepôts valide
+				$TWarehouseName = explode(';', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
+				$TIdWarehouse = TRequeteCore::_get_id_by_sql($PDOdb, "SELECT rowid FROM ".MAIN_DB_PREFIX."entrepot WHERE label IN ('".implode("','", $TWarehouseName)."')");
+
+				foreach($produit->stock_warehouse as $identrepot => $objecttemp ){
+					if(in_array($identrepot, $TIdWarehouse)){
+						$line->stock +=  $objecttemp->real;
+					}
+				}
+			}
 		}
 		
 		if($line->stock <= 0 || $line->qty_toship <= 0) {

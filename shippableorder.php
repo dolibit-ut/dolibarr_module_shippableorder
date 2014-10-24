@@ -396,11 +396,6 @@ if ($resql)
 		$shippableOrder->isOrderShippable($objp->rowid);
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
 		
-		if($conf->clinomadic->enabled){
-			//Etat du stock : théorique, physique + "Neuf" => spécifique Nomadic
-			print '<td align="right" class="nowrap">'.$shippableOrder->printStockStatus().'</td>';
-		}
-		
 		// Sélection de l'entrepot à déstocker pour l'expédition
 		// On met par défaut le premier entrepot créé
 		$sql2 = "SELECT rowid";

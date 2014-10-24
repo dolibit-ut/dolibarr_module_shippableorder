@@ -21,6 +21,8 @@ RemainToShip=Remain to ship : %s
 QtyShippable=Quantité shippable : %s
 NbShippingCreated=%s shipment(s) created
 NoOrderSelected=No order selected
+ShippableOrderSetup=Module configuration
+StockEntrepot=Warehouse stocks to be taken in account (warehouse1;warehouse2;warehouse3)
 
 LegendEnStock = Stock OK - Order totally shippable
 LegendStockPartiel = Partial stock - Order shippable partially
