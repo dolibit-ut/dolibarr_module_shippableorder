@@ -45,12 +45,12 @@ class ShippableOrder
 					$this->nbProduct++;
 				}
 				
-				$this->loadStock($line->fk_product);
+				//$this->loadStock($line->fk_product);
 			}
 		}
 	}
 	
-	function loadStock($fk_product){
+	/*function loadStock($fk_product){
 		global $db;
 		
 		$product = new Product($db);
@@ -60,20 +60,19 @@ class ShippableOrder
 		$product->load_virtual_stock();
 		
 		$this->TProduct[$product->id] = $product;
-	}
+	}*/
 	
 	function printStockStatus(){
 		global $db;
 		dol_include_once('/product/stock/class/entrepot.class.php');
 		
 		$stock_neuf=$stock_theorique=$stock_real=0;
-		/*echo '<pre>';
-		print_r($this->TProduct);
-		echo '</pre>';*/
+		
+		//TODO mettre en conf entrepotS
+		$entrepot = new Entrepot($db);
+		$entrepot->fetch('','Neuf');
+
 		foreach ($this->TProduct as $idprod => $product) {
-			
-			$entrepot = new Entrepot($db);
-			$entrepot->fetch('','Neuf');
 			
 			$stock_neuf += $product->stock_warehouse[$entrepot->id]->real;
 			$stock_theorique += $product->stock_theorique;
