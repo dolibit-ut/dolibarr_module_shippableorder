@@ -133,7 +133,7 @@ class ShippableOrder
 		$infos = '';
 		
 		// Produit déjà totalement expédié
-		if($isShippable['to_ship'] == 0) {
+		if($isShippable['to_ship'] <= 0) {
 			$pictopath = img_picto('', 'statut5.png', '', false, 1);
 		}
 		
