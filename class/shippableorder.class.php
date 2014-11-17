@@ -66,7 +66,9 @@ class ShippableOrder
 			$line->stock = $produit->stock_reel;
 			
 			//Filtrer stock uniquement des entrepôts en conf
-			if($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE){				
+			if($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE){
+				define('INC_FROM_DOLIBARR',true);
+				dol_include_once('/shippableorder/config.php');
 				$PDOdb = new TPDOdb;
 				$line->stock = 0;
 				//Récupération des entrepôts valide
