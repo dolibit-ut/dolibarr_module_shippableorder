@@ -272,7 +272,6 @@ if ($resql)
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
-	print_liste_field_titre($langs->trans('Stocks'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Warehouse'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('CreateShipment'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 
@@ -287,7 +286,6 @@ if ($resql)
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" name="snom" value="'.$snom.'">';
 	print '</td>';
-	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
