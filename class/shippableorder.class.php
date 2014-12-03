@@ -167,9 +167,10 @@ class ShippableOrder
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
 	function createShipping($db, $TIDCommandes, $TEnt_comm) {
-		global $user, $langs;
+		global $user, $langs, $conf;
 		
 		dol_include_once('/expedition/class/expedition.class.php');
+		dol_include_once('/core/modules/expedition/modules_expedition.php');
 		
 		$nbShippingCreated = 0;
 		
@@ -226,6 +227,9 @@ class ShippableOrder
 		
 		// Il faut recharger les lignes qui viennent juste d'être créées
 		$shipment->fetch($shipment->id);
+		/*echo '<pre>';
+		print_r($shipment);
+		exit;*/
 		
 		$outputlangs = $langs;
 		if ($conf->global->MAIN_MULTILANGS) {$newlang=$shipment->client->default_lang;}
@@ -233,11 +237,11 @@ class ShippableOrder
 			$outputlangs = new Translate("",$conf);
 			$outputlangs->setDefaultLang($newlang);
 		}
-		$result=expedtion_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs);
+		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs);
 		
 		if($result > 0) {
 			$objectref = dol_sanitizeFileName($shipment->ref);
-			$dir = $conf->expedition_bon->dir_output . "/" . $objectref;
+			$dir = $conf->expedition->dir_output . "/sending/" . $objectref;
 			$file = $dir . "/" . $objectref . ".pdf";
 			return $file;
 		}

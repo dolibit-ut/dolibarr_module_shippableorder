@@ -57,6 +57,7 @@ $pagenext = $page + 1;
 if (! $sortfield) $sortfield='c.date_livraison';
 if (! $sortorder) $sortorder='ASC';
 $limit = $conf->liste_limit;
+$diroutputpdf=$conf->shippableorder->multidir_output[$conf->entity];
 
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
 $hookmanager->initHooks(array('orderlist'));
@@ -452,6 +453,13 @@ if ($resql)
 	</table>
 	
 	<?php
+	
+	if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) {
+		print '<br><br>';
+		// We disable multilang because we concat already existing pdf.
+		$formfile = new FormFile($db);
+		$formfile->show_documents('shippableorder','',$diroutputpdf,$urlsource,false,true,'',1,1,0,48,1,$param,$langs->trans("GlobalGeneratedFiles"));
+	}
 
 	$db->free($resql);
 }
