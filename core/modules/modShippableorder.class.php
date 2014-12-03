@@ -71,7 +71,7 @@ class modShippableorder extends DolibarrModules
 			,'tpl'=>1
 		);
 
-		$this->dirs = array();
+		$this->dirs = array('/shippableorder');
 
 		// Config pages. Put here list of php page, stored into mymodule/admin directory, to use to setup module.
 		$this->config_page_url = false; //'shippableorder.php@shippableorder';

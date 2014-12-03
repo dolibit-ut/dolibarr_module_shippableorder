@@ -23,6 +23,9 @@ NbShippingCreated=%s expédition(s) créée(s)
 NoOrderSelected=Aucune commande sélectionnée
 ShippableOrderSetup=Configuration du module
 StockEntrepot=Entrepôts dont le stock est à prendre en compte (entrepot1;entrepot2,entrepot3)
+OrderShipped=Commandes expédiées
+GenerateShipmentPDF=Modèle à utiliser pour générer automatiquement le document expédition (le temps de traitement peut être plus long)
+GenerateGlobalPDFForCreatedShipments=Générer un fichier PDF global contenant tous les PDF des expéditions créées
 
 LegendEnStock = En stock - Commande totalement expédiable
 LegendStockPartiel = Stock partiel - Commande partiellement expédiable

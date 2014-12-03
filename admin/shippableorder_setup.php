@@ -67,6 +67,7 @@ print '<td align="center" width="300">'.$langs->trans("Value").'</td>'."\n";
 
 
 $form=new TFormCore();
+$formdoli=new Form($db);
 // Add shipment as titles in invoice
 $var=!$var;
 print '<tr '.$bc[$var].'>';
@@ -80,6 +81,38 @@ print $form->texte('',"SHIPPABLEORDER_SPECIFIC_WAREHOUSE",$conf->global->SHIPPAB
 print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
 print '</form>';
 print '</td></tr>';
+
+// Generate automatically shipment pdf
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("GenerateShipmentPDF").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_GENERATE_SHIPMENT_PDF">';
+dol_include_once('/core/modules/expedition/modules_expedition.php');
+$liste = ModelePdfExpedition::liste_modeles($db);
+print $formdoli->selectarray('SHIPPABLEORDER_GENERATE_SHIPMENT_PDF', $liste, $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF, 1);
+print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+
+if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) && $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF != -1 && strpos($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF, 'generic_expedition_odt') === false) {
+	// Generate global PDF containing all PDF
+	$var=!$var;
+	print '<tr '.$bc[$var].'>';
+	print '<td>'.$langs->trans("GenerateGlobalPDFForCreatedShipments").'</td>';
+	print '<td align="center" width="20">&nbsp;</td>';
+	print '<td align="right" width="300">';
+	print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+	print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+	print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_GENERATE_GLOBAL_PDF">';
+	print $formdoli->selectyesno("SHIPPABLEORDER_GENERATE_GLOBAL_PDF",$conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF,1);
+	print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+	print '</form>';
+	print '</td></tr>';
+}
 
 print '</table>';
 

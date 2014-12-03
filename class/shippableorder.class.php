@@ -193,6 +193,7 @@ class ShippableOrder
 				$shipping->sizeS = "NULL";
 				$shipping->size_units = 0;
 				$shipping->socid = $this->order->socid;
+				$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
 				
 				foreach($this->order->lines as $line) {
 					
@@ -203,7 +204,12 @@ class ShippableOrder
 				
 				$nbShippingCreated++;
 				$shipping->create($user);
+				
+				// Génération du PDF
+				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping);
 			}
+
+			if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);
 			
 			if($nbShippingCreated > 0) {
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
@@ -212,6 +218,78 @@ class ShippableOrder
 			}
 		} else {
 			setEventMessage($langs->trans('NoOrderSelected'), 'warnings');
+		}
+	}
+
+	function shipment_generate_pdf(&$shipment) {
+		global $conf, $langs, $db;
+		
+		// Il faut recharger les lignes qui viennent juste d'être créées
+		$shipment->fetch($shipment->id);
+		
+		$outputlangs = $langs;
+		if ($conf->global->MAIN_MULTILANGS) {$newlang=$shipment->client->default_lang;}
+		if (! empty($newlang)) {
+			$outputlangs = new Translate("",$conf);
+			$outputlangs->setDefaultLang($newlang);
+		}
+		$result=expedtion_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs);
+		
+		if($result > 0) {
+			$objectref = dol_sanitizeFileName($shipment->ref);
+			$dir = $conf->expedition_bon->dir_output . "/" . $objectref;
+			$file = $dir . "/" . $objectref . ".pdf";
+			return $file;
+		}
+		
+		return '';
+	}
+
+	function generate_global_pdf($TFiles) {
+		global $langs, $conf;
+		
+        // Create empty PDF
+        $pdf=pdf_getInstance();
+        if (class_exists('TCPDF'))
+        {
+            $pdf->setPrintHeader(false);
+            $pdf->setPrintFooter(false);
+        }
+        $pdf->SetFont(pdf_getPDFFont($langs));
+
+        if (! empty($conf->global->MAIN_DISABLE_PDF_COMPRESSION)) $pdf->SetCompression(false);
+
+		// Add all others
+		foreach($TFiles as $file)
+		{
+			// Charge un document PDF depuis un fichier.
+			$pagecount = $pdf->setSourceFile($file);
+			for ($i = 1; $i <= $pagecount; $i++)
+			{
+				$tplidx = $pdf->importPage($i);
+				$s = $pdf->getTemplatesize($tplidx);
+				$pdf->AddPage($s['h'] > $s['w'] ? 'P' : 'L');
+				$pdf->useTemplate($tplidx);
+			}
+		}
+
+		// Create output dir if not exists
+		$diroutputpdf = $conf->shippableorder->multidir_output[$conf->entity];
+		dol_mkdir($diroutputpdf);
+
+		// Save merged file
+		$filename=strtolower(dol_sanitizeFileName($langs->transnoentities("OrderShipped")));
+		if ($pagecount)
+		{
+			$now=dol_now();
+			$file=$diroutputpdf.'/'.$filename.'_'.dol_print_date($now,'dayhourlog').'.pdf';
+			$pdf->Output($file,'F');
+			if (! empty($conf->global->MAIN_UMASK))
+			@chmod($file, octdec($conf->global->MAIN_UMASK));
+		}
+		else
+		{
+			setEventMessage($langs->trans('NoPDFAvailableForChecked'),'errors');
 		}
 	}
 }

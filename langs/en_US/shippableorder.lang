@@ -23,6 +23,9 @@ NbShippingCreated=%s shipment(s) created
 NoOrderSelected=No order selected
 ShippableOrderSetup=Module configuration
 StockEntrepot=Warehouse stocks to be taken in account (warehouse1;warehouse2;warehouse3)
+OrderShipped=Shipped orders
+GenerateShipmentPDF=Model to use to automatically generate the shipment document (may take a little more time)
+GenerateGlobalPDFForCreatedShipments=Generate a global PDF file containing all created shipments PDF
 
 LegendEnStock = Stock OK - Order totally shippable
 LegendStockPartiel = Partial stock - Order shippable partially
