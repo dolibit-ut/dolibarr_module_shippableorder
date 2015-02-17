@@ -346,7 +346,7 @@ if ($resql)
 		
 		// Payer : oui/non spécific Nomadic
 		if($conf->clinomadic->enabled){
-			print '<td align="center" class="nowrap" style="font-weight:bold;">'.ucfirst(($objp->reglement_recu == 0) ? "Non" : $objp->reglement_recu ).'</td>';
+			print '<td align="center" class="nowrap" style="font-weight:bold;">'.ucfirst(($objp->reglement_recu != 'oui') ? "Non" : $objp->reglement_recu ).'</td>';
 		}
 
 		// Ref customer
