@@ -255,7 +255,7 @@ if ($resql)
 	if (! empty($moreforfilter))
 	{
 	    print '<tr class="liste_titre">';
-	    print '<td class="liste_titre" colspan="11">';
+	    print '<td class="liste_titre" colspan="10">';
 	    print $moreforfilter;
 		print '</td><td>';
 		print '</td><td>';
@@ -270,6 +270,7 @@ if ($resql)
 	print_liste_field_titre($langs->trans('OrderDate'),$_SERVER["PHP_SELF"],'c.date_commande','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('DeliveryDate'),$_SERVER["PHP_SELF"],'c.date_livraison','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('AmountHT'),$_SERVER["PHP_SELF"],'c.total_ht','',$param, 'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('AmountHTToShip'),$_SERVER["PHP_SELF"],'','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
@@ -304,6 +305,7 @@ if ($resql)
 
 	$var=true;
 	$total=0;
+	$totaltoship=0;
 	$subtotal=0;
 
 	$generic_commande = new Commande($db);
@@ -318,6 +320,7 @@ if ($resql)
 
 		$generic_commande->id=$objp->rowid;
 		$generic_commande->ref=$objp->ref;
+		$shippableOrder->isOrderShippable($objp->rowid);
 
 		print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 		print '<td class="nobordernopadding nowrap">';
@@ -384,6 +387,10 @@ if ($resql)
 
 		// Amount HT
 		print '<td align="right" class="nowrap">'.price($objp->total_ht).'</td>';
+		
+		// Amount HT remain to ship
+		print '<td align="right" class="nowrap">'.price($shippableOrder->order->total_ht_to_ship).'</td>';
+		
 
 		// Statut
 		print '<td align="right" class="nowrap">'.$generic_commande->LibStatut($objp->fk_statut,$objp->facturee,5).'</td>';
@@ -392,7 +399,6 @@ if ($resql)
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
 		
 		//Expédiable
-		$shippableOrder->isOrderShippable($objp->rowid);
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
 		
 		// Sélection de l'entrepot à déstocker pour l'expédition
@@ -416,8 +422,25 @@ if ($resql)
 		print '</tr>';
 
 		$total+=$objp->total_ht;
+		$totaltoship+=$shippableOrder->order->total_ht_to_ship;
 		$subtotal+=$objp->total_ht;
 		$i++;
+	}
+
+	if ($total>0)
+	{
+		print '<tr class="liste_total">';
+		if($num<$limit){
+			print '<td align="left">'.$langs->trans("TotalHT").'</td>';
+		}
+		else
+		{
+			print '<td align="left">'.$langs->trans("TotalHTforthispage").'</td>';
+		}
+		
+		print '<td colspan="5" align="right"">'.price($total);
+		print '<td align="right"">'.price($totaltoship).'<td colspan="5"></td>';
+		print '</tr>';
 	}
 
 	print '</table>';

@@ -17,6 +17,16 @@ class ShippableOrder
 		$this->order = new Commande($db);
 		$this->order->fetch($idOrder);
 		$this->order->loadExpeditions();
+		$this->order->fetchObjectLinked('','','','shipping');
+		
+		// Calcul du montant restant à expédier
+		$this->order->total_ht_shipped = 0;
+		if(!empty($this->order->linkedObjects['shipping'])) {
+			foreach($this->order->linkedObjects['shipping'] as $exp) {
+				$this->order->total_ht_shipped += $exp->total_ht;
+			}
+		}
+		$this->order->total_ht_to_ship = $this->order->total_ht - $this->order->total_ht_shipped;
 		
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
