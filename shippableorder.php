@@ -417,7 +417,7 @@ if ($resql)
         }
 		
 		// TEnt_comm[] : clef = id_commande val = id_entrepot
-		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($default_wharehouse,'TEnt_comm['.$obj->rowid.']','',1).'</td>';
+		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($default_wharehouse,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
 		/*echo strtotime($objp->date_livraison);exit;
 		echo dol_now();exit;*/
 		//Checkbox pour créer expédition
