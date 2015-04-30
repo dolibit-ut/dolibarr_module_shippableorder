@@ -56,7 +56,10 @@ $pageprev = $page - 1;
 $pagenext = $page + 1;
 if (! $sortfield) $sortfield='c.date_livraison';
 if (! $sortorder) $sortorder='ASC';
-$limit = $conf->liste_limit;
+
+$limit = (GETPOST('show_all')==1) ? 99999 : $conf->liste_limit;
+
+
 $diroutputpdf=$conf->shippableorder->multidir_output[$conf->entity];
 
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
@@ -228,7 +231,12 @@ if ($resql)
 	if ($search_sale > 0) $param.='&search_sale='.$search_sale;
 
 	$num = $db->num_rows($resql);
-	print_barre_liste($title, $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+	if($limit < 99999) {
+	    print_barre_liste($title. ' <a href="'.$_SERVER["PHP_SELF"].'?show_all=1">'.$langs->trans('ShowAllLine').'</a>', $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+    }
+    else{
+        print_barre_liste($title  , 0,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+    }
 	$i = 0;
 
 	// Lignes des champs de filtre
@@ -389,7 +397,7 @@ if ($resql)
 		print '<td align="right" class="nowrap">'.price($objp->total_ht).'</td>';
 		
 		// Amount HT remain to ship
-		print '<td align="right" class="nowrap">'.price($shippableOrder->order->total_ht_to_ship).'</td>';
+		print '<td align="right" class="nowrap">'.price(round($shippableOrder->order->total_ht_to_ship,2)).'</td>';
 		
 
 		// Statut
