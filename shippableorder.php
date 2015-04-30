@@ -235,6 +235,7 @@ if ($resql)
 	    print_barre_liste($title. ' <a href="'.$_SERVER["PHP_SELF"].'?show_all=1">'.$langs->trans('ShowAllLine').'</a>', $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
     }
     else{
+        $conf->liste_limit = $limit;
         print_barre_liste($title  , 0,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
     }
 	$i = 0;
