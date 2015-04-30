@@ -401,17 +401,23 @@ if ($resql)
 		//Expédiable
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
 		
-		// Sélection de l'entrepot à déstocker pour l'expédition
-		// On met par défaut le premier entrepot créé
-		$sql2 = "SELECT rowid";
-		$sql2.= " FROM ".MAIN_DB_PREFIX."entrepot";
-		$sql2.= " ORDER BY rowid ASC";
-		$sql2.= " LIMIT 1";
-		$resql2 = $db->query($sql2);
-		$res2 = $db->fetch_object($resql2);
+        if( !empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
+            $default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
+        }
+        else{
+            // Sélection de l'entrepot à déstocker pour l'expédition
+            // On met par défaut le premier entrepot créé
+            $sql2 = "SELECT rowid";
+            $sql2.= " FROM ".MAIN_DB_PREFIX."entrepot";
+            $sql2.= " ORDER BY rowid ASC";
+            $sql2.= " LIMIT 1";
+            $resql2 = $db->query($sql2);
+            $res2 = $db->fetch_object($resql2);
+            $default_wharehouse = $objp->rowid;
+        }
 		
 		// TEnt_comm[] : clef = id_commande val = id_entrepot
-		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($res2->rowid,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
+		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($res2->rowid,'TEnt_comm['.$default_wharehouse.']','',1).'</td>';
 		/*echo strtotime($objp->date_livraison);exit;
 		echo dol_now();exit;*/
 		//Checkbox pour créer expédition
