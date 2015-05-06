@@ -153,6 +153,9 @@ class ShippableOrder
 		$infos.= "\n".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
 		
 		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
+		if($isShippable['to_ship'] > 0 && $isShippable['to_ship'] != $line->qty) {
+			$picto.= ' ('.$isShippable['to_ship'].')';
+		}
 		
 		return $picto;
 	}
