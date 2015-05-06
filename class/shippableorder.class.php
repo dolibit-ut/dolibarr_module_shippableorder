@@ -182,6 +182,11 @@ class ShippableOrder
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
 		
+		// Option pour la génération PDF
+		$hidedetails = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
+		$hidedesc = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
+		$hideref = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
+		
 		$nbShippingCreated = 0;
 		
 		if(count($TIDCommandes) > 0) {
@@ -217,7 +222,7 @@ class ShippableOrder
 				$shipping->create($user);
 				
 				// Génération du PDF
-				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping);
+				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
 
 			if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);
@@ -232,7 +237,7 @@ class ShippableOrder
 		}
 	}
 
-	function shipment_generate_pdf(&$shipment) {
+	function shipment_generate_pdf(&$shipment, $hidedetails, $hidedesc, $hideref) {
 		global $conf, $langs, $db;
 		
 		// Il faut recharger les lignes qui viennent juste d'être créées
@@ -247,7 +252,7 @@ class ShippableOrder
 			$outputlangs = new Translate("",$conf);
 			$outputlangs->setDefaultLang($newlang);
 		}
-		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs);
+		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
 		
 		if($result > 0) {
 			$objectref = dol_sanitizeFileName($shipment->ref);
