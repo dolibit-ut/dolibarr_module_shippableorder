@@ -378,9 +378,9 @@ if ($resql)
 		$ml = dol_print_date($db->jdate($objp->date_commande),'%B');
 		$d = dol_print_date($db->jdate($objp->date_commande),'%d');
 		print '<td align="right">';
-		print $d;
-		print ' <a href="'.$_SERVER['PHP_SELF'].'?orderyear='.$y.'&amp;ordermonth='.$m.'">'.$ml.'</a>';
-		print ' <a href="'.$_SERVER['PHP_SELF'].'?orderyear='.$y.'">'.$y.'</a>';
+		print $d.'/';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?orderyear='.$y.'&amp;ordermonth='.$m.'">'.$m.'/</a>';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?orderyear='.$y.'">'.$y.'</a>';
 		print '</td>';
 
 		// Delivery date
@@ -389,9 +389,9 @@ if ($resql)
 		$ml = dol_print_date($db->jdate($objp->date_livraison),'%B');
 		$d = dol_print_date($db->jdate($objp->date_livraison),'%d');
 		print '<td align="right">';
-		print $d;
-		print ' <a href="'.$_SERVER['PHP_SELF'].'?deliveryyear='.$y.'&amp;deliverymonth='.$m.'">'.$ml.'</a>';
-		print ' <a href="'.$_SERVER['PHP_SELF'].'?deliveryyear='.$y.'">'.$y.'</a>';
+		print $d.'/';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?deliveryyear='.$y.'&amp;deliverymonth='.$m.'">'.$m.'/</a>';
+		print '<a href="'.$_SERVER['PHP_SELF'].'?deliveryyear='.$y.'">'.$y.'</a>';
 		print '</td>';
 
 		// Amount HT
