@@ -56,7 +56,10 @@ $pageprev = $page - 1;
 $pagenext = $page + 1;
 if (! $sortfield) $sortfield='c.date_livraison';
 if (! $sortorder) $sortorder='ASC';
-$limit = $conf->liste_limit;
+
+$limit = (GETPOST('show_all')==1) ? 99999 : $conf->liste_limit;
+
+
 $diroutputpdf=$conf->shippableorder->multidir_output[$conf->entity];
 
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
@@ -228,7 +231,13 @@ if ($resql)
 	if ($search_sale > 0) $param.='&search_sale='.$search_sale;
 
 	$num = $db->num_rows($resql);
-	print_barre_liste($title, $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+	if($limit < 99999) {
+	    print_barre_liste($title. ' <a href="'.$_SERVER["PHP_SELF"].'?show_all=1">'.$langs->trans('ShowAllLine').'</a>', $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+    }
+    else{
+        $conf->liste_limit = $limit;
+        print_barre_liste($title  , 0,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+    }
 	$i = 0;
 
 	// Lignes des champs de filtre
@@ -255,7 +264,7 @@ if ($resql)
 	if (! empty($moreforfilter))
 	{
 	    print '<tr class="liste_titre">';
-	    print '<td class="liste_titre" colspan="11">';
+	    print '<td class="liste_titre" colspan="10">';
 	    print $moreforfilter;
 		print '</td><td>';
 		print '</td><td>';
@@ -270,6 +279,7 @@ if ($resql)
 	print_liste_field_titre($langs->trans('OrderDate'),$_SERVER["PHP_SELF"],'c.date_commande','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('DeliveryDate'),$_SERVER["PHP_SELF"],'c.date_livraison','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('AmountHT'),$_SERVER["PHP_SELF"],'c.total_ht','',$param, 'align="right"',$sortfield,$sortorder);
+	print_liste_field_titre($langs->trans('AmountHTToShip'),$_SERVER["PHP_SELF"],'','',$param, 'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('Status'),$_SERVER["PHP_SELF"],'c.fk_statut','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('InStock'),$_SERVER["PHP_SELF"],'qty_prod','',$param,'align="right"',$sortfield,$sortorder);
@@ -304,6 +314,7 @@ if ($resql)
 
 	$var=true;
 	$total=0;
+	$totaltoship=0;
 	$subtotal=0;
 
 	$generic_commande = new Commande($db);
@@ -318,6 +329,7 @@ if ($resql)
 
 		$generic_commande->id=$objp->rowid;
 		$generic_commande->ref=$objp->ref;
+		$shippableOrder->isOrderShippable($objp->rowid);
 
 		print '<table class="nobordernopadding"><tr class="nocellnopadd">';
 		print '<td class="nobordernopadding nowrap">';
@@ -384,6 +396,10 @@ if ($resql)
 
 		// Amount HT
 		print '<td align="right" class="nowrap">'.price($objp->total_ht).'</td>';
+		
+		// Amount HT remain to ship
+		print '<td align="right" class="nowrap">'.price(round($shippableOrder->order->total_ht_to_ship,2)).'</td>';
+		
 
 		// Statut
 		print '<td align="right" class="nowrap">'.$generic_commande->LibStatut($objp->fk_statut,$objp->facturee,5).'</td>';
@@ -392,20 +408,25 @@ if ($resql)
 		print '<td align="right" class="nowrap">'.$objp->qty_prod.'</td>';
 		
 		//Expédiable
-		$shippableOrder->isOrderShippable($objp->rowid);
 		print '<td align="right" class="nowrap">'.$shippableOrder->orderStockStatus().'</td>';
 		
-		// Sélection de l'entrepot à déstocker pour l'expédition
-		// On met par défaut le premier entrepot créé
-		$sql2 = "SELECT rowid";
-		$sql2.= " FROM ".MAIN_DB_PREFIX."entrepot";
-		$sql2.= " ORDER BY rowid ASC";
-		$sql2.= " LIMIT 1";
-		$resql2 = $db->query($sql2);
-		$res2 = $db->fetch_object($resql2);
+        if( !empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
+            $default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
+        }
+        else{
+            // Sélection de l'entrepot à déstocker pour l'expédition
+            // On met par défaut le premier entrepot créé
+            $sql2 = "SELECT rowid";
+            $sql2.= " FROM ".MAIN_DB_PREFIX."entrepot";
+            $sql2.= " ORDER BY rowid ASC";
+            $sql2.= " LIMIT 1";
+            $resql2 = $db->query($sql2);
+            $res2 = $db->fetch_object($resql2);
+            $default_wharehouse = $res2->rowid;
+        }
 		
 		// TEnt_comm[] : clef = id_commande val = id_entrepot
-		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($res2->rowid,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
+		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($default_wharehouse,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
 		/*echo strtotime($objp->date_livraison);exit;
 		echo dol_now();exit;*/
 		//Checkbox pour créer expédition
@@ -416,8 +437,25 @@ if ($resql)
 		print '</tr>';
 
 		$total+=$objp->total_ht;
+		$totaltoship+=$shippableOrder->order->total_ht_to_ship;
 		$subtotal+=$objp->total_ht;
 		$i++;
+	}
+
+	if ($total>0)
+	{
+		print '<tr class="liste_total">';
+		if($num<$limit){
+			print '<td align="left">'.$langs->trans("TotalHT").'</td>';
+		}
+		else
+		{
+			print '<td align="left">'.$langs->trans("TotalHTforthispage").'</td>';
+		}
+		
+		print '<td colspan="5" align="right"">'.price($total);
+		print '<td align="right"">'.price($totaltoship).'<td colspan="5"></td>';
+		print '</tr>';
 	}
 
 	print '</table>';
