@@ -123,6 +123,18 @@ $companystatic = new Societe($db);
 
 $help_url="EN:Module_Customers_Orders|FR:Module_Commandes_Clients|ES:Módulo_Pedidos_de_clientes";
 llxHeader('',$langs->trans("ShippableOrders"),$help_url);
+?>
+<script type="text/javascript">
+$(document).ready(function() {
+	$("#checkall").click(function() {
+		$(".checkforgen").attr('checked', true);
+	});
+	$("#checknone").click(function() {
+		$(".checkforgen").attr('checked', false);
+	});
+});
+</script>
+<?php
 
 $sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
 $sql.= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
@@ -304,11 +316,14 @@ if ($resql)
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">&nbsp;</td>';
+	//print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre" align="right">';
 	print '<input type="image" class="liste_titre" name="button_search" src="'.img_picto($langs->trans("Search"),'search.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("Search")).'" title="'.dol_escape_htmltag($langs->trans("Search")).'">';
 	print '&nbsp; ';
 	print '<input type="image" class="liste_titre" name="button_removefilter" src="'.img_picto($langs->trans("Search"),'searchclear.png','','',1).'" value="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'" title="'.dol_escape_htmltag($langs->trans("RemoveFilter")).'">';
+	print '</td>';
+	print '<td class="liste_titre" align="center">';
+	print '<a href="#" id="checkall">'.$langs->trans("All").'</a> / <a href="#" id="checknone">'.$langs->trans("None").'</a>';
 	print '</td>';
 	print '</tr>';
 
@@ -432,7 +447,7 @@ if ($resql)
 		//Checkbox pour créer expédition
 		$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
 		
-		print '<td align="right" class="nowrap">'.'<input class="butAction" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
+		print '<td align="right" class="nowrap">'.'<input class="checkforgen" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
 		
 		print '</tr>';
 
