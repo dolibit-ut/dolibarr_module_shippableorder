@@ -55,6 +55,8 @@ class ShippableOrder
 					$this->nbProduct++;
 				}
 
+			} elseif($line->product_type==1 && $line->fk_product>0) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
+				$this->order->total_ht_to_ship -= $line->price;
 			}
 		}
 	}
