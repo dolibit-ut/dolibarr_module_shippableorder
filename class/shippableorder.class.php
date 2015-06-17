@@ -178,6 +178,38 @@ class ShippableOrder
 		return false;
 	}
 	
+	function orderCommandeByClient($TIDCommandes) {
+		
+		global $db;
+		
+		$TCommande = array();
+		var_dump($TIDCommandes);
+		foreach($TIDCommandes as $id_commande) {
+			$o=new Commande($db);
+			$o->fetch($id_commande);
+			
+			$TCommande[] = $o;
+				
+		}
+		
+		usort($TCommande, array('ShippableOrder','_sort_by_client'));
+		
+		$TIDCommandes=array();
+		foreach($TCommande as &$o ) {
+			
+			$TIDCommandes[] = $o->id;
+		}
+		
+		var_dump($TIDCommandes);
+		return $TIDCommandes;
+	}
+	function _sort_by_client(&$a, &$b) {
+			
+		if($a->socid < $b->socid) return -1;
+		else if($a->socid > $b->socid) return 1;
+		else return 0; 
+		
+	}
 	/**
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
@@ -195,6 +227,8 @@ class ShippableOrder
 		$nbShippingCreated = 0;
 		
 		if(count($TIDCommandes) > 0) {
+			
+			$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
 			
 			foreach($TIDCommandes as $id_commande) {
 				
