@@ -79,13 +79,14 @@ class ShippableOrder
 			
 			//Filtrer stock uniquement des entrepôts en conf
 			if($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE){
-				define('INC_FROM_DOLIBARR',true);
-				dol_include_once('/shippableorder/config.php');
-				$PDOdb = new TPDOdb;
 				$line->stock = 0;
 				//Récupération des entrepôts valide
 				$TWarehouseName = explode(';', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
-				$TIdWarehouse = TRequeteCore::_get_id_by_sql($PDOdb, "SELECT rowid FROM ".MAIN_DB_PREFIX."entrepot WHERE label IN ('".implode("','", $TWarehouseName)."')");
+				$TIdWarehouse=array();
+				$res_wh = $db->query( "SELECT rowid FROM ".MAIN_DB_PREFIX."entrepot WHERE label IN ('".implode("','", $TWarehouseName)."')");
+				while($obj_wh = $db->fetch_object($res_wh)) {
+					$TIdWarehouse[] = $obj_wh->rowid;
+				}
 
 				foreach($produit->stock_warehouse as $identrepot => $objecttemp ){
 					if(in_array($identrepot, $TIdWarehouse)){
