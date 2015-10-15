@@ -1,6 +1,11 @@
 Module104050Name = Shippable orders
 Module104050Desc = Shippable order list according to product stock
 
+ATMAbout = This module has been developed by <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>You can find the documentation on our <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>For any question or feedback, contact us on <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>For any commercial question, contact us on <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> or at +33 9 77 19 50 70<br><br>Find our other modules on <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+ShippableOrderSetup = ShippableOrder module setup
+ShippableOrderAbout = About ShippableOrder
+
 ShippableOrdersMenu=Shippable orders
 ShippableOrders=Shippable orders list
 QtyProd=Total product qty 
@@ -26,6 +31,10 @@ StockEntrepot=Warehouse stocks to be taken in account (warehouse1;warehouse2;war
 OrderShipped=Shipped orders
 GenerateShipmentPDF=Model to use to automatically generate the shipment document (may take a little more time)
 GenerateGlobalPDFForCreatedShipments=Generate a global PDF file containing all created shipments PDF
+AmountHTToShip=Amount remaining to ship
+ShowAllLine=See all shippable orders
+CloseOrderWhenComplete=Automatically set "delivered" the order when nothing left to ship (after shipment validation)
+OrderClosed=Order %s set delivered
 
 LegendEnStock = Stock OK - Order totally shippable
 LegendStockPartiel = Partial stock - Order shippable partially

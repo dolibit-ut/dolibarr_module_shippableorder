@@ -1,6 +1,11 @@
 Module104050Name = Commandes expédiables
 Module104050Desc = Liste des commandes expédiables en fonction du stock de produit
 
+ATMAbout = Ce module a été développé par <a href="http://www.atm-consulting.fr" target="_blank">ATM Consulting</a><br>Vous pouvez retrouver la documentation sur notre <a href="http://wiki.atm-consulting.fr/index.php/Accueil" target="_blank">wiki</a><br><br>Pour toute question technique ou retour, contactez-nous sur <a href="mailto:support@atm-consulting.fr">support@atm-consulting.fr</a><br><br>Pour toute question commerciale, contactez-nous sur <a href="mailto:contact@atm-consulting.fr">contact@atm-consulting.fr</a> ou au +33 9 77 19 50 70<br><br>Retrouvez nos autres modules sur <a href="http://www.dolistore.com/search.php?orderby=position&orderway=desc&search_query=atm&submit_search=Rechercher" target="_blank">Dolistore</a>
+
+ShippableOrderSetup = Configuration du module ShippableOrder
+ShippableOrderAbout = A propos du module ShippableOrder
+
 ShippableOrdersMenu=Commandes expédiables
 ShippableOrders=Liste des commandes expédiables
 QtyProd=Qté produits
@@ -22,12 +27,14 @@ QtyShippable=Quantité expédiable : %s
 NbShippingCreated=%s expédition(s) créée(s)
 NoOrderSelected=Aucune commande sélectionnée
 ShippableOrderSetup=Configuration du module
-StockEntrepot=Entrepôts dont le stock est à prendre en compte (entrepot1;entrepot2,entrepot3)
+StockEntrepot=Entrepôts dont le stock est à prendre en compte (entrepot1;entrepot2;entrepot3)
 OrderShipped=Commandes expédiées
 GenerateShipmentPDF=Modèle à utiliser pour générer automatiquement le document expédition (le temps de traitement peut être plus long)
 GenerateGlobalPDFForCreatedShipments=Générer un fichier PDF global contenant tous les PDF des expéditions créées
 AmountHTToShip=MT HT restant à expédier
 ShowAllLine=Voir l'ensemble des commandes expédiables
+CloseOrderWhenComplete=Classer délivrée automatiquement une commande lorsqu'il ne reste rien à expédier (après validation de l'expédition)
+OrderClosed=Commande %s classée délivrée
 
 LegendEnStock = En stock - Commande totalement expédiable
 LegendStockPartiel = Stock partiel - Commande partiellement expédiable
