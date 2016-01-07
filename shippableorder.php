@@ -17,6 +17,7 @@
 
 require 'config.php';
 require_once DOL_DOCUMENT_ROOT.'/core/lib/date.lib.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT.'/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT.'/commande/class/commande.class.php';
@@ -81,6 +82,20 @@ switch ($action) {
 			$order->createShipping($db, $TIDCommandes, $TEnt_comm);
 		}
 		
+		break;
+	
+	case 'remove_file':
+		$file = GETPOST('file');
+		if(!empty($file)) {
+			$file = DOL_DATA_ROOT.'/shippableorder/'.$file;
+			$ret = dol_delete_file($file, 0, 0, 0);
+			if ($ret)
+				setEventMessage($langs->trans("FileWasRemoved", GETPOST('file')));
+			else
+				setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('file')), 'errors');
+			
+		}
+
 		break;
 	
 	default:
