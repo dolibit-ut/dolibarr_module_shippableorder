@@ -224,7 +224,10 @@ if ($search_user > 0)
 }
 
 $sql .= ' AND c.fk_statut IN (1,2)';
-$sql .= ' AND cd.product_type = 0';
+
+if(empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
+	$sql .= ' AND cd.product_type = 0';	
+}
 
 $sql.= ' GROUP BY c.rowid ORDER BY '.$sortfield.' '.$sortorder;
 $sql.= $db->plimit($limit + 1,$offset);
