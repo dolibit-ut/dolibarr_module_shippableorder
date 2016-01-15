@@ -12,7 +12,7 @@ class ShippableOrder
 	}
 	
 	function isOrderShippable($idOrder){
-		global $db;
+		global $db,$conf;
 		
 		$this->order = new Commande($db);
 		$this->order->fetch($idOrder);
@@ -22,7 +22,7 @@ class ShippableOrder
 		// Calcul du montant restant à expédier
 		$this->order->total_ht_shipped = 0;
 		if(!empty($this->order->linkedObjects['shipping'])) {
-			foreach($this->order->linkedObjects['shipping'] as $exp) {
+			foreach($this->order->linkedObjects['shipping'] as &$exp) {
 				$this->order->total_ht_shipped += $exp->total_ht;
 			}
 		}
@@ -33,9 +33,10 @@ class ShippableOrder
 		$this->nbProduct = 0;
 		
 		$TSomme = array();
-		foreach($this->order->lines as $line){
+		foreach($this->order->lines as &$line){
 			
-			if($line->product_type==0 && $line->fk_product>0) {
+			if (!empty($conf->global->SHIPPABLE_ORDER_ALLOW_ALL_LINE) || ($line->product_type==0 && $line->fk_product>0))
+			{
 				// Prise en compte des quantité déjà expédiées
 				$qtyAlreadyShipped = $this->order->expeditions[$line->id];
 				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
@@ -56,7 +57,7 @@ class ShippableOrder
 				}
 
 			} elseif($line->product_type==1) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
-				$this->order->total_ht_to_ship -= $line->total_ht;
+				if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) $this->order->total_ht_to_ship -= $line->total_ht;
 			}
 		}
 	}
@@ -65,8 +66,8 @@ class ShippableOrder
 		global $db,$conf;
 		
 		$TSomme[$line->fk_product] += $line->qty_toship;
-		
-		if(!isset($line->stock)) {
+
+		if(!isset($line->stock) && $line->fk_product > 0) {
 			if(empty($this->TProduct[$line->fk_product])) {
 				$produit = new Product($db);
 				$produit->fetch($line->fk_product);
@@ -84,6 +85,7 @@ class ShippableOrder
 				$TWarehouseName = explode(';', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
 				$TIdWarehouse=array();
 				$res_wh = $db->query( "SELECT rowid FROM ".MAIN_DB_PREFIX."entrepot WHERE label IN ('".implode("','", $TWarehouseName)."')");
+				
 				while($obj_wh = $db->fetch_object($res_wh)) {
 					$TIdWarehouse[] = $obj_wh->rowid;
 				}
@@ -95,8 +97,14 @@ class ShippableOrder
 				}
 			}
 		}
-		
-		if($line->stock <= 0 || $line->qty_toship <= 0) {
+
+		if ($conf->global->SHIPPABLE_ORDER_ALLOW_SHIPPING_IF_NOT_ENOUGH_STOCK )
+		{
+			$isShippable = 1;
+			$qtyShippable = $line->qty;
+			$line->stock = $line->qty;
+		}
+		else if($line->stock <= 0 || $line->qty_toship <= 0) {
 			$isShippable = 0;
 			$qtyShippable = 0;
 		} else if ($TSomme[$line->fk_product] <= $line->stock) {
@@ -184,7 +192,7 @@ class ShippableOrder
 		global $db;
 		
 		$TCommande = array();
-		var_dump($TIDCommandes);
+		//var_dump($TIDCommandes);
 		foreach($TIDCommandes as $id_commande) {
 			$o=new Commande($db);
 			$o->fetch($id_commande);
@@ -201,7 +209,7 @@ class ShippableOrder
 			$TIDCommandes[] = $o->id;
 		}
 		
-		var_dump($TIDCommandes);
+		//var_dump($TIDCommandes);
 		return $TIDCommandes;
 	}
 	function _sort_by_client(&$a, &$b) {
@@ -252,7 +260,6 @@ class ShippableOrder
 				$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
 				
 				foreach($this->order->lines as $line) {
-					
 					if($this->TlinesShippable[$line->id]['stock'] > 0) {
 						$shipping->addline($TEnt_comm[$this->order->id], $line->id, $this->TlinesShippable[$line->id]['qty_shippable']);
 					}
@@ -260,6 +267,13 @@ class ShippableOrder
 				
 				$nbShippingCreated++;
 				$shipping->create($user);
+				
+				// Valider l'expédition
+				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
+				{
+					$shipping->statut = 0;
+					$shipping->valid($user);
+				} 
 				
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
@@ -269,7 +283,9 @@ class ShippableOrder
 			
 			if($nbShippingCreated > 0) {
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
-				header("Location: ".dol_buildpath('/expedition/liste.php',2));
+				$dol_version = (float) DOL_VERSION;
+				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
+				else header("Location: ".dol_buildpath('/expedition/list.php',2));
 				exit;
 			}
 		} else {
