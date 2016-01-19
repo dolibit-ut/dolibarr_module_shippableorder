@@ -11,6 +11,7 @@ ShippableOrders=Liste des commandes expédiables
 QtyProd=Qté produits
 CreateShipment=Exp.
 CreateShipmentButton=Créer les expéditions
+SetOrderSentButton=Passer au statut en cours
 RealStock=Stock Réel
 TheoricStock=Stock Théorique
 InStock=Expédiable
