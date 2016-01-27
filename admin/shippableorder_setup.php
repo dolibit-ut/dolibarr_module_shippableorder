@@ -208,6 +208,19 @@ print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">'
 print '</form>';
 print '</td></tr>';
 
+// Don't redirect after creating expeditions
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("DisableAutoRedirect").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT">';
+print $formdoli->selectyesno("SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT",$conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT,1);
+print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+
 print '</table>';
 
 llxFooter();
