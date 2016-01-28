@@ -34,6 +34,7 @@ GenerateShipmentPDF=Modèle à utiliser pour générer automatiquement le docume
 GenerateGlobalPDFForCreatedShipments=Générer un fichier PDF global contenant tous les PDF des expéditions créées
 AmountHTToShip=MT HT restant à expédier
 ShowAllLine=Voir l'ensemble des commandes expédiables
+NotShowAllLine=Ne plus voir la totalité des commandes
 CloseOrderWhenComplete=Classer délivrée automatiquement une commande lorsqu'il ne reste rien à expédier (après validation de l'expédition)
 OrderClosed=Commande %s classée délivrée
 

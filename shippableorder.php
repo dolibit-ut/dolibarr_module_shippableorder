@@ -58,7 +58,7 @@ $pagenext = $page + 1;
 if (! $sortfield) $sortfield='c.date_livraison';
 if (! $sortorder) $sortorder='ASC';
 
-$limit = (GETPOST('show_all')==1) ? 99999 : $conf->liste_limit;
+$limit = (GETPOST('show_all')==1) ? false : $conf->liste_limit;
 
 
 $diroutputpdf=$conf->shippableorder->multidir_output[$conf->entity];
@@ -239,7 +239,11 @@ if(empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 }
 
 $sql.= ' GROUP BY c.rowid ORDER BY '.$sortfield.' '.$sortorder;
-$sql.= $db->plimit($limit + 1,$offset);
+if ($limit > 0) 
+{
+	$sql2 = $sql;
+	$sql.= $db->plimit($limit + 1,$offset);
+}
 
 //echo $sql; exit;
 
@@ -257,31 +261,39 @@ if ($resql)
 	{
 		$title = $langs->trans('ShippableOrders');
 	}
-
-	$param='&socid='.$socid;
-	if ($ordermonth)      $param.='&ordermonth='.$ordermonth;
-	if ($orderyear)       $param.='&orderyear='.$orderyear;
-	if ($deliverymonth)   $param.='&deliverymonth='.$deliverymonth;
-	if ($deliveryyear)    $param.='&deliveryyear='.$deliveryyear;
-	if ($sref)            $param.='&sref='.$sref;
-	if ($snom)            $param.='&snom='.$snom;
-	if ($sref_client)     $param.='&sref_client='.$sref_client;
-	if ($search_user > 0) $param.='&search_user='.$search_user;
-	if ($search_sale > 0) $param.='&search_sale='.$search_sale;
-
+	
+	$param = '';
+	if ($socid)				$param.='&socid='.$socid;
+	if ($ordermonth)      	$param.='&ordermonth='.$ordermonth;
+	if ($orderyear)       	$param.='&orderyear='.$orderyear;
+	if ($deliverymonth)   	$param.='&deliverymonth='.$deliverymonth;
+	if ($deliveryyear)    	$param.='&deliveryyear='.$deliveryyear;
+	if ($sref)            	$param.='&sref='.$sref;
+	if ($snom)            	$param.='&snom='.$snom;
+	if ($sref_client)     	$param.='&sref_client='.$sref_client;
+	if ($search_user > 0) 	$param.='&search_user='.$search_user;
+	if ($search_sale > 0) 	$param.='&search_sale='.$search_sale;
+	if ($limit === false) 	$param.='&show_all=1';
+	
 	$num = $db->num_rows($resql);
-	if($limit < 99999) {
-	    print_barre_liste($title. ' <a href="'.$_SERVER["PHP_SELF"].'?show_all=1">'.$langs->trans('ShowAllLine').'</a>', $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+	$i = 0;
+	
+	if($limit !== false) {
+		$totalLine = null;
+		if (isset($sql2))
+		{
+			$resql2 = $db->query($sql2);
+			if ($resql2) $totalLine = $db->num_rows($resql2);
+		}
+	    print_barre_liste($title. '&nbsp;<a href="'.$_SERVER["PHP_SELF"].'?show_all=1'.$param.'">'.$langs->trans('ShowAllLine').'</a>', $page,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num, $totalLine);
     }
     else{
-        $conf->liste_limit = $limit;
-        print_barre_liste($title  , 0,$_SERVER["PHP_SELF"],$param,$sortfield,$sortorder,'',$num);
+		print_fiche_titre($title, '<a href="'.$_SERVER["PHP_SELF"].'?show_all=0'.(str_replace('&show_all=1', '', $param)).'">'.$langs->trans('NotShowAllLine').'</a>', $picto='title_generic.png');
     }
-	$i = 0;
 
 	// Lignes des champs de filtre
 	print '<form method="GET" action="'.$_SERVER["PHP_SELF"].'">';
-
+	
 	print '<table class="noborder" width="100%">';
 
 	$moreforfilter='';
@@ -309,8 +321,9 @@ if ($resql)
 		print '</td><td>';
 	    print '</td></tr>';
 	}
-
+	
 	print '<tr class="liste_titre">';
+	if ($limit === false) print '<input type="hidden" name="show_all" value="1" />';
 	print_liste_field_titre($langs->trans('Ref'),$_SERVER["PHP_SELF"],'c.ref','',$param,'',$sortfield,$sortorder);
 	if($conf->clinomadic->enabled) print_liste_field_titre($langs->trans('Règlement'),$_SERVER["PHP_SELF"],'c.ref_client','',$param,'',$sortfield,$sortorder);
 	print_liste_field_titre($langs->trans('RefCustomerOrder'),$_SERVER["PHP_SELF"],'c.ref_client','',$param,'',$sortfield,$sortorder);
@@ -362,9 +375,9 @@ if ($resql)
 	$generic_commande = new Commande($db);
 	$shippableOrder = new ShippableOrder();
 	$formproduct = new FormProduct($db);
-	while ($i < min($num,$limit))
+	
+	while ($objp = $db->fetch_object($resql))
 	{
-		$objp = $db->fetch_object($resql);
 		$var=!$var;
 		print '<tr '.$bc[$var].'>';
 		print '<td class="nowrap">';
@@ -487,7 +500,7 @@ if ($resql)
 	if ($total>0)
 	{
 		print '<tr class="liste_total">';
-		if($num<$limit){
+		if($limit === false){
 			print '<td align="left">'.$langs->trans("TotalHT").'</td>';
 		}
 		else
