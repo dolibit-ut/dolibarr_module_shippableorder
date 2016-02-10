@@ -120,11 +120,10 @@ class InterfaceShippableOrdertrigger
 				dol_include_once('/commande/class/commande.class.php');
 				dol_include_once('/shippableorder/class/shippableorder.class.php');
 				
-				
 				$object->fetchObjectLinked(0,'commande');
 				
-				if(!empty($object->linkedObjects['commande'][0])){
-					$commande = $object->linkedObjects['commande'][0];
+				if(!empty($object->linkedObjects['commande'])){
+					$commande = array_pop($object->linkedObjects['commande']);
 					
 					$orderShippable = new ShippableOrder();
 					$orderShippable->isOrderShippable($commande->id);
