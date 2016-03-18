@@ -47,3 +47,4 @@ AllowAllLines=Autoriser tout type de ligne (type produit, service et libre)
 AllowShippingIfNotEnoughStock=Autoriser l'expédition même si pas assez de stock
 AutoValidateShipping=Passer les expéditions à l'état "Validée"
 DisableAutoRedirect=Désactiver la redirection automatique après création des expéditions
+DisableAutoCheckOrder=Ne pas pré-cocher les commande expédiables

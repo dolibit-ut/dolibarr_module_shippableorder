@@ -482,14 +482,22 @@ if ($resql)
             $default_wharehouse = $res2->rowid;
         }
 		
-		// TEnt_comm[] : clef = id_commande val = id_entrepot
-		print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($default_wharehouse,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
-		/*echo strtotime($objp->date_livraison);exit;
-		echo dol_now();exit;*/
-		//Checkbox pour créer expédition
-		$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
-		
-		print '<td align="right" class="nowrap">'.'<input class="checkforgen" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';		
+		if($shippableOrder->nbProduct > 0) {
+			// TEnt_comm[] : clef = id_commande val = id_entrepot
+			print '<td align="right" class="nowrap">'.$formproduct->selectWarehouses($default_wharehouse,'TEnt_comm['.$objp->rowid.']','',1).'</td>';
+			/*echo strtotime($objp->date_livraison);exit;
+			echo dol_now();exit;*/
+			
+			//Checkbox pour créer expédition
+			$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+			if($conf->global->SHIPPABLEORDER_NO_DEFAULT_CHECK) {
+				$checked = false;
+			}
+			
+			print '<td align="right" class="nowrap">'.'<input class="checkforgen" type="checkbox" '.$checked.' name="TIDCommandes[]" value="'.$objp->rowid.'" />'.'</td>';
+		} else {
+			print '<td colspan="2">&nbsp;</td>';
+		}		
 		
 		print '</tr>';
 

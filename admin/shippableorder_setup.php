@@ -221,6 +221,19 @@ print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">'
 print '</form>';
 print '</td></tr>';
 
+// Don't check shippable orders by default
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("DisableAutoCheckOrder").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_NO_DEFAULT_CHECK">';
+print $formdoli->selectyesno("SHIPPABLEORDER_NO_DEFAULT_CHECK",$conf->global->SHIPPABLEORDER_NO_DEFAULT_CHECK,1);
+print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+
 print '</table>';
 
 llxFooter();
