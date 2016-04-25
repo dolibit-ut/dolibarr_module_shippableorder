@@ -44,14 +44,18 @@ if (! $user->admin) {
 
 // Parameters
 $action = GETPOST('action', 'alpha');
-
+	
 /*
  * Actions
  */
 if (preg_match('/set_(.*)/',$action,$reg))
 {
+
 	$code=$reg[1];
-	if (dolibarr_set_const($db, $code, GETPOST($code), 'chaine', 0, '', $conf->entity) > 0)
+	$value = GETPOST($code);
+	if(is_array($value))$value = implode(',',$value);
+	
+	if (dolibarr_set_const($db, $code, $value, 'chaine', 0, '', $conf->entity) > 0)
 	{
 		header("Location: ".$_SERVER["PHP_SELF"]);
 		exit;
@@ -118,7 +122,21 @@ print '<td align="right" width="300">';
 print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
 print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
 print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_SPECIFIC_WAREHOUSE">';
-print $form->texte('',"SHIPPABLEORDER_SPECIFIC_WAREHOUSE",$conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE,50);
+
+dol_include_once('/product/class/html.formproduct.class.php');
+
+$formDoli=new Form($db);
+$formprod = new FormProduct($db);
+$formprod->loadWarehouses();
+
+$TWareHouse = array();
+foreach($formprod->cache_warehouses as $id=>$ent) {
+	$TWareHouse[$id]=$ent['label'];	
+}
+
+
+echo $formDoli->multiselectarray('SHIPPABLEORDER_SPECIFIC_WAREHOUSE',$TWareHouse,explode(',', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE));
+
 print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
 print '</form>';
 print '</td></tr>';

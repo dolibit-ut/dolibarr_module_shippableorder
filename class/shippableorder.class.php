@@ -1,18 +1,22 @@
 <?php
 class ShippableOrder
 {
-	function __construct () {
+	function __construct (&$db) {
 		$this->TlinesShippable = array();
 		$this->order = null;
 		$this->nbProduct = 0;
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
 		
+		$this->$db = & $db;
+		
 		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
 	}
 	
 	function isOrderShippable($idOrder){
-		global $db,$conf;
+		global $conf;
+		
+		$db = &$this->db;
 		
 		$this->order = new Commande($db);
 		$this->order->fetch($idOrder);
@@ -63,7 +67,9 @@ class ShippableOrder
 	}
 	
 	function isLineShippable(&$line, &$TSomme) {
-		global $db,$conf;
+		global $conf;
+		
+		$db = &$this->db;
 		
 		$TSomme[$line->fk_product] += $line->qty_toship;
 
@@ -189,7 +195,7 @@ class ShippableOrder
 	
 	function orderCommandeByClient($TIDCommandes) {
 		
-		global $db;
+		$db = &$this->db;
 		
 		$TCommande = array();
 		//var_dump($TIDCommandes);
@@ -222,8 +228,10 @@ class ShippableOrder
 	/**
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
-	function createShipping($db, $TIDCommandes, $TEnt_comm) {
+	function createShipping($TIDCommandes, $TEnt_comm) {
 		global $user, $langs, $conf;
+		
+		$db = &$this->db;
 		
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
@@ -300,8 +308,9 @@ class ShippableOrder
 	}
 
 	function shipment_generate_pdf(&$shipment, $hidedetails, $hidedesc, $hideref) {
-		global $conf, $langs, $db;
+		global $conf, $langs;
 		
+		$db = &$this->db;
 		// Il faut recharger les lignes qui viennent juste d'être créées
 		$shipment->fetch($shipment->id);
 		/*echo '<pre>';

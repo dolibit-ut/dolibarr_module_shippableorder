@@ -15,7 +15,8 @@ class ActionsShippableorder
 		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
         {
         	dol_include_once('/shippableorder/class/shippableorder.class.php');
-        	$shippableOrder = new ShippableOrder();
+			
+			$shippableOrder = new ShippableOrder($db);
 			$shippableOrder->isOrderShippable($object->id);
         	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
 			echo '<td>'.$shippableOrder->orderStockStatus(false).'</td></tr>';
@@ -24,4 +25,19 @@ class ActionsShippableorder
 
 		return 0;
 	}
+
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) 
+    {  
+      	global $db, $langs;
+		
+		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
+        {
+     		
+			dol_include_once('/shippableorder/class/shippableorder.class.php');
+        	
+			   	
+		}
+		
+	}
+
 }

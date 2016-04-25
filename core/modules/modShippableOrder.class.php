@@ -58,7 +58,7 @@ class modShippableOrder extends DolibarrModules
 		// Module description, used if translation string 'ModuleXXXDesc' not found (where XXX is value of numeric property 'numero' of module)
 		$this->description = "Description of module ShippableOrder";
 		// Possible values for version are: 'development', 'experimental', 'dolibarr' or version
-		$this->version = '1.1';
+		$this->version = '2.0';
 		// Key used in llx_const table to save module status enabled/disabled (where MYMODULE is value of property name of module in uppercase)
 		$this->const_name = 'MAIN_MODULE_'.strtoupper($this->name);
 		// Where to store the module in setup page (0=common,1=interface,2=others,3=very specific)
@@ -87,7 +87,10 @@ class modShippableOrder extends DolibarrModules
 		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
 		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@shippableorder')) // Set here all workflow context managed by module
 		//                        );
-		$this->module_parts = array('hooks'=>array('ordercard'),'tpl'=>1,'triggers'=>1);
+		$this->module_parts = array(
+			'hooks'=>array('ordercard')
+			,'triggers'=>1
+		);
 
 		// Data directories to create when module is enabled.
 		// Example: this->dirs = array("/shippableorder/temp");
@@ -102,7 +105,7 @@ class modShippableOrder extends DolibarrModules
 		$this->requiredby = array();	// List of modules id to disable if this one is disabled
 		$this->conflictwith = array();	// List of modules id this module is in conflict with
 		$this->phpmin = array(5,0);					// Minimum version of PHP required by module
-		$this->need_dolibarr_version = array(3,4);	// Minimum version of Dolibarr required by module
+		$this->need_dolibarr_version = array(3,9);	// Minimum version of Dolibarr required by module
 		$this->langfiles = array("shippableorder@shippableorder");
 
 		// Constants

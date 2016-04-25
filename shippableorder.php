@@ -78,8 +78,8 @@ switch ($action) {
 			$TIDCommandes = $_REQUEST['TIDCommandes'];
 			$TEnt_comm = $_REQUEST['TEnt_comm'];
 			
-			$order = new ShippableOrder();
-			$order->createShipping($db, $TIDCommandes, $TEnt_comm);
+			$order = new ShippableOrder($db);
+			$order->createShipping($TIDCommandes, $TEnt_comm);
 		}
 		
 		if(!empty($_REQUEST['subSetSent'])) {
@@ -375,7 +375,7 @@ if ($resql)
 	$subtotal=0;
 
 	$generic_commande = new Commande($db);
-	$shippableOrder = new ShippableOrder();
+	$shippableOrder = new ShippableOrder($db);
 	$formproduct = new FormProduct($db);
 	
 	while ($objp = $db->fetch_object($resql))
