@@ -8,7 +8,7 @@ class ShippableOrder
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
 		
-		$this->$db = & $db;
+		$this->db = & $db;
 		
 		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
 	}
@@ -85,17 +85,11 @@ class ShippableOrder
 			$line->stock = $produit->stock_reel;
 			
 			//Filtrer stock uniquement des entrepôts en conf
-			if($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE){
+			if(!empty($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE)){
 				$line->stock = 0;
 				//Récupération des entrepôts valide
-				$TWarehouseName = explode(';', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
-				$TIdWarehouse=array();
-				$res_wh = $db->query( "SELECT rowid FROM ".MAIN_DB_PREFIX."entrepot WHERE label IN ('".implode("','", $TWarehouseName)."')");
+				$TIdWarehouse = explode(',', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
 				
-				while($obj_wh = $db->fetch_object($res_wh)) {
-					$TIdWarehouse[] = $obj_wh->rowid;
-				}
-
 				foreach($produit->stock_warehouse as $identrepot => $objecttemp ){
 					if(in_array($identrepot, $TIdWarehouse)){
 						$line->stock +=  $objecttemp->real;
@@ -150,7 +144,7 @@ class ShippableOrder
 		return $txt;
 	}
 	
-	function orderLineStockStatus($line){
+	function orderLineStockStatus(&$line, $withStockVisu = false){
 		global $langs;
 		
 		if(isset($this->TlinesShippable[$line->id])) {
@@ -176,15 +170,22 @@ class ShippableOrder
 		}
 		
 		$infos = $langs->trans('QtyInStock', $isShippable['stock']);
-		$infos.= "\n".$langs->trans('RemainToShip', $isShippable['to_ship']);
-		$infos.= "\n".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
+		$infos.= " - ".$langs->trans('RemainToShip', $isShippable['to_ship']);
+		$infos.= " - ".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
 		
 		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
 		if($isShippable['to_ship'] > 0 && $isShippable['to_ship'] != $line->qty) {
 			$picto.= ' ('.$isShippable['to_ship'].')';
 		}
 		
-		return $picto;
+		if($withStockVisu) {
+			return $isShippable['stock'].' '.$picto;	
+		}
+		else{
+			return $picto;	
+		}
+		
+		
 	}
 	
 	function is_ok_for_shipping(){

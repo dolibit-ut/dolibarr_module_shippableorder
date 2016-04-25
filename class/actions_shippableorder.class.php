@@ -35,7 +35,24 @@ class ActionsShippableorder
      		
 			dol_include_once('/shippableorder/class/shippableorder.class.php');
         	
-			   	
+			$shippableOrder =  &$object->shippableorder;
+			
+			?>
+			<script type="text/javascript">
+				$('table#tablelines tr.liste_titre td.linecolqty').after('<td class="linecolstock" align="right"><?php echo $langs->trans('EnStock') ?></td>');				
+				<?php
+				foreach($object->lines as &$line) {
+					
+					$stock = $shippableOrder->orderLineStockStatus($line,true);
+					
+					?>
+					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecolqty').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
+					<?php
+				}
+				
+				?>
+			</script>
+			<?php
 		}
 		
 	}
