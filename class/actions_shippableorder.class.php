@@ -39,14 +39,14 @@ class ActionsShippableorder
 			
 			?>
 			<script type="text/javascript">
-				$('table#tablelines tr.liste_titre td.linecolqty').after('<td class="linecolstock" align="right"><?php echo $langs->trans('EnStock') ?></td>');				
+				$('table#tablelines tr.liste_titre td.linecoldescription').first().after('<td class="linecolstock" align="right" style="color:#fff;"><?php echo $langs->trans('Available') ?></td>');				
 				<?php
 				foreach($object->lines as &$line) {
 					
 					$stock = $shippableOrder->orderLineStockStatus($line,true);
 					
 					?>
-					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecolqty').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
+					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
 					<?php
 				}
 				
