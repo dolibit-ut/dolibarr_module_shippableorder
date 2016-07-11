@@ -125,7 +125,7 @@ class InterfaceShippableOrdertrigger
 				if(!empty($object->linkedObjects['commande'])){
 					$commande = array_pop($object->linkedObjects['commande']);
 					
-					$orderShippable = new ShippableOrder();
+					$orderShippable = new ShippableOrder($this->db);
 					$orderShippable->isOrderShippable($commande->id);
 					
 					if($orderShippable->nbProduct == 0) {
