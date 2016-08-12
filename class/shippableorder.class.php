@@ -204,7 +204,7 @@ class ShippableOrder
 			$o=new Commande($db);
 			$o->fetch($id_commande);
 			
-			if($o->statut != 6) $TCommande[] = $o;
+			if($o->statut != 3) $TCommande[] = $o;
 				
 		}
 		
@@ -304,7 +304,15 @@ class ShippableOrder
 				}
 			}
 		} else {
-			setEventMessage($langs->trans('NoOrderSelected'), 'warnings');
+			setEventMessage($langs->trans('NoOrderSelectedOrAlreadySent'), 'warnings');
+			if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
+			{
+				header("Location: ".$_SERVER["PHP_SELF"]);					
+			}else{
+				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
+				else header("Location: ".dol_buildpath('/expedition/list.php',2));
+				exit;
+			}
 		}
 	}
 
