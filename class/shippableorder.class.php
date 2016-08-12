@@ -204,7 +204,7 @@ class ShippableOrder
 			$o=new Commande($db);
 			$o->fetch($id_commande);
 			
-			$TCommande[] = $o;
+			if($o->statut != 6) $TCommande[] = $o;
 				
 		}
 		
