@@ -287,10 +287,10 @@ class ShippableOrder
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
-
-			if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);
 			
 			if($nbShippingCreated > 0) {
+				if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);	
+				
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
 				$dol_version = (float) DOL_VERSION;
 				
