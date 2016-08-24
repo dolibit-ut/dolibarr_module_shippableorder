@@ -260,7 +260,7 @@ class ShippableOrder
 			$o=new Commande($db);
 			$o->fetch($id_commande);
 			
-			$TCommande[] = $o;
+			if($o->statut != 3) $TCommande[] = $o;
 				
 		}
 		
@@ -343,10 +343,10 @@ class ShippableOrder
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
-
-			if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);
 			
 			if($nbShippingCreated > 0) {
+				if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);	
+				
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
 				$dol_version = (float) DOL_VERSION;
 				
@@ -359,8 +359,31 @@ class ShippableOrder
 					exit;
 				}
 			}
+			else{
+				setEventMessage($langs->trans('NoOrderSelectedOrAlreadySent'), 'warnings');
+				$dol_version = (float) DOL_VERSION;
+				
+				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
+				{
+					header("Location: ".$_SERVER["PHP_SELF"]);					
+				}else{
+					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
+					else header("Location: ".dol_buildpath('/expedition/list.php',2));
+					exit;
+				}
+			}
 		} else {
-			setEventMessage($langs->trans('NoOrderSelected'), 'warnings');
+			setEventMessage($langs->trans('NoOrderSelectedOrAlreadySent'), 'warnings');
+			$dol_version = (float) DOL_VERSION;
+			
+			if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
+			{
+				header("Location: ".$_SERVER["PHP_SELF"]);					
+			}else{
+				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
+				else header("Location: ".dol_buildpath('/expedition/list.php',2));
+				exit;
+			}
 		}
 	}
 
