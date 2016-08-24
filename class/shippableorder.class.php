@@ -2,15 +2,52 @@
 class ShippableOrder
 {
 	function __construct (&$db) {
+		
+		global $langs;
+		
+		$langs->load('shippableorder@shippableorder');
+		
 		$this->TlinesShippable = array();
 		$this->order = null;
 		$this->nbProduct = 0;
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
 		
+		$this->statusShippable =array(
+				 1=>array(
+						'trans'=>$langs->trans('LegendEnStock'),
+				 		'transshort'=>$langs->trans('LegendEnStockShort'),
+						'picto'=>img_picto('LegendEnStockShort', 'statut4.png'))
+				,2=>array(
+						'trans'=>$langs->trans('LegendStockPartiel'),
+						'transshort'=>$langs->trans('LegendStockPartielShort'),
+						'picto'=>img_picto('LegendStockPartielShort', 'statut1.png'))
+				,3=>array(
+						'trans'=>$langs->trans('LegendHorsStock'),
+						'transshort'=>$langs->trans('LegendHorsStockShort'),
+						'picto'=>img_picto('LegendHorsStockShort', 'statut8.png'))
+				,4=>array(
+						'trans'=>$langs->trans('LegendAlreadyShipped'),
+						'transshort'=>$langs->trans('LegendAlreadyShippedShort'),
+						'picto'=>img_picto('LegendAlreadyShippedShort', 'statut5.png'))
+				);
+		
 		$this->db = & $db;
 		
 		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
+	}
+	
+	
+	public function selectShippableOrderStatus($htmlname='search_status', $selected) {
+		require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
+		
+		$form = new Form($this->db);
+		
+		foreach($this->statusShippable as $statusdesckey=>$statusdescval) {
+			$arrayselect[$statusdesckey] = $statusdescval['transshort'];
+		}
+		
+		return $form->selectarray($htmlname, $arrayselect,$selected, 1);
 	}
 	
 	function isOrderShippable($idOrder){
@@ -120,28 +157,47 @@ class ShippableOrder
 		return $isShippable;
 	}
 	
-	function orderStockStatus($short=true){
+	/**
+	 * 
+	 * @param string $short
+	 * @param string $mode
+	 * @return string|unknown
+	 */
+	function orderStockStatus($short = true, $mode = 'txt') {
 		global $langs;
 		
 		$txt = '';
 		
-		if($this->nbProduct == 0)
+		if ($this->nbProduct == 0) {
 			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
-		else if($this->nbProduct == $this->nbShippable)
+			$code=4;
+		} else if ($this->nbProduct == $this->nbShippable) {
 			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
-		else if($this->nbPartiallyShippable > 0)
+			$code=1;
+		} else if ($this->nbPartiallyShippable > 0) {
 			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-		else if($this->nbShippable == 0)
+			$code=2;
+		} else if ($this->nbShippable == 0) {
 			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
-		else
+			$code=3;
+		} else {
 			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
+			$code=2;
+		}
 		
 		$label = 'NbProductShippable';
-		if($short) $label = 'NbProductShippableShort';
+		if ($short)
+			$label = 'NbProductShippableShort';
 		
-		$txt .= ' '.$langs->trans($label, $this->nbShippable, $this->nbProduct);
+		$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
 		
-		return $txt;
+		if ($mode == 'txt') {
+			return $txt;
+		} elseif ($mode == 'code') {
+			return $code;
+		} else {
+			return $txt;
+		}
 	}
 	
 	function orderLineStockStatus(&$line, $withStockVisu = false){

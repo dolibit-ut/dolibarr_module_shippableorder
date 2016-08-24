@@ -43,6 +43,12 @@ LegendStockPartiel = Stock partiel - Commande partiellement expédiable
 LegendHorsStock = Stock insuffisant - Commande non expédiable
 LegendAlreadyShipped = Commande déjà totalement expédiée ou en cours d'expédition
 
+LegendEnStockShort = En stock
+LegendStockPartielShort = Stock partiel
+LegendHorsStockShort = Stock insuffisant
+LegendAlreadyShippedShort = Déjà expédiée
+
+
 AllowAllLines=Autoriser tout type de ligne (type produit, service et libre)
 AllowShippingIfNotEnoughStock=Autoriser l'expédition même si pas assez de stock
 AutoValidateShipping=Passer les expéditions à l'état "Validée"
