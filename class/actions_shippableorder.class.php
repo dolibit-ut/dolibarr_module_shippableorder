@@ -28,7 +28,8 @@ class ActionsShippableorder
 
 	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) 
     {  
-      	global $db, $langs;
+      	global $db, $user, $langs;
+		dol_include_once('/hevea/class/hevea_tools.class.php');
 		
 		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
         {
@@ -44,6 +45,11 @@ class ActionsShippableorder
 				foreach($object->lines as &$line) {
 					
 					$stock = $shippableOrder->orderLineStockStatus($line,true);
+					
+					$hevea_tools = new HeveaTools($db);
+					$TInfosStock = $hevea_tools->getInfosStockProduct($user, $line->fk_product);
+					
+					if(!empty($TInfosStock['dt_receive'])) $stock.= '<br/> Liv. : '.$TInfosStock['dt_receive'].'';
 					
 					?>
 					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
