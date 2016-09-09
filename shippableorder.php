@@ -40,10 +40,10 @@ $sall = GETPOST('sall');
 $socid = GETPOST('socid', 'int');
 $search_user = GETPOST('search_user', 'int');
 $search_sale = GETPOST('search_sale', 'int');
-$search_status = GETPOST('search_status', 'int');
-if ($search_status == - 1) {
-	$search_status = '';
-}
+$search_status = GETPOST('search_status');
+if (!is_array($search_status) && $search_status <= 0) {
+	$search_status = array();
+} else $search_status = (array)$search_status;
 
 // Security check
 $id = (GETPOST('orderid') ? GETPOST('orderid') : GETPOST('id', 'int'));
@@ -139,6 +139,7 @@ if (GETPOST("button_removefilter_x")) {
 	$ordermonth = '';
 	$deliverymonth = '';
 	$deliveryyear = '';
+	$search_status = array();
 }
 
 /**
@@ -283,8 +284,9 @@ if ($resql) {
 		$param .= '&search_user=' . $search_user;
 	if ($search_sale > 0)
 		$param .= '&search_sale=' . $search_sale;
-	if ($search_status > 0)
-		$param .= '&$search_status=' . $search_status;
+	if (!empty($search_status)) {
+		foreach($search_status as $status) $param .= '&search_status[]=' . $status;
+	}
 	if ($limit === false)
 		$param .= '&show_all=1';
 	
@@ -400,10 +402,10 @@ if ($resql) {
 		
 		if (! empty($search_status)) {
 			$result = $shippableOrder->orderStockStatus(true, 'code');
-
-			if ($result != $search_status) {
+			
+			if(!in_array($result, $search_status)) {
 				$BdisplayLine = false;
-			} 
+			}
 		}
 		if ($BdisplayLine == true) {
 			

@@ -47,7 +47,12 @@ class ShippableOrder
 			$arrayselect[$statusdesckey] = $statusdescval['transshort'];
 		}
 		
-		return $form->selectarray($htmlname, $arrayselect,$selected, 1);
+		if(method_exists($form, 'multiselectarray')) {
+			return $form->multiselectarray($htmlname, $arrayselect,$selected, 1, 0, '', 0, '161');
+		} else {
+			return $form->selectarray($htmlname, $arrayselect,$selected[0], 1);
+		}
+		
 	}
 	
 	function isOrderShippable($idOrder){
