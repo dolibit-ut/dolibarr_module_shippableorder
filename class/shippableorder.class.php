@@ -1,9 +1,12 @@
 <?php
+
+require_once DOL_DOCUMENT_ROOT.'/product/stock/class/entrepot.class.php';
+
 class ShippableOrder
 {
 	function __construct (&$db) {
 		
-		global $langs;
+		global $langs, $user;
 		
 		$langs->load('shippableorder@shippableorder');
 		
@@ -35,6 +38,18 @@ class ShippableOrder
 		$this->db = & $db;
 		
 		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
+		
+		$this->TWarehouses = array();
+		if(!empty($user->array_options['options_entrepot_preferentiel'])) {
+			$e = new Entrepot($this->db);
+			if($e->fetch($user->array_options['options_entrepot_preferentiel'])) {
+				$TChildWarehouses = array();
+				if(method_exists($e, 'get_children_warehouses')) {
+					$this->TWarehouses = array_merge(array($e->id), $e->get_children_warehouses($e->id, $TChildWarehouses));
+				}
+			}
+		}
+		
 	}
 	
 	
@@ -154,8 +169,11 @@ class ShippableOrder
 			$line->stock = $produit->stock_reel;
 			
 			// Filtre par entrepot de l'utilisateur
-			if(!empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER) && !empty($user->array_options['options_entrepot_preferentiel'])) {
-				$line->stock = $produit->stock_warehouse[$user->array_options['options_entrepot_preferentiel']]->real;
+			if(!empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER) && !empty($this->TWarehouses)) {
+				$line->stock = 0;
+				foreach($this->TWarehouses as $id_ent) {
+					$line->stock += $produit->stock_warehouse[$id_ent]->real;
+				}
 			}
 			//Filtrer stock uniquement des entrepôts en conf
 			elseif(!empty($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE)){
