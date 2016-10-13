@@ -36,6 +36,8 @@ AmountHTToShip=MT HT restant à expédier
 ShowAllLine=Voir l'ensemble des commandes expédiables
 NotShowAllLine=Ne plus voir la totalité des commandes
 CloseOrderWhenComplete=Classer délivrée automatiquement une commande lorsqu'il ne reste rien à expédier (après validation de l'expédition)
+EntrepotByUser=Utiliser un entrepot spécifique par utilisateur (prime sur la configuration "Entrepôts dont le stock est à prendre en compte")
+EntrepotByUserActivated=Configuration "Entrepot par utilisateur" activée
 OrderClosed=Commande %s classée délivrée
 
 LegendEnStock = En stock - Commande totalement expédiable
