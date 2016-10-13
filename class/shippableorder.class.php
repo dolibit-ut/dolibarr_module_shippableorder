@@ -109,10 +109,10 @@ class ShippableOrder
 	}
 	
 	function isLineShippable(&$line, &$TSomme) {
-		global $conf;
+		global $conf, $user;
 		
 		$db = &$this->db;
-		
+
 		$TSomme[$line->fk_product] += $line->qty_toship;
 
 		if(!isset($line->stock) && $line->fk_product > 0) {
@@ -126,8 +126,12 @@ class ShippableOrder
 			}
 			$line->stock = $produit->stock_reel;
 			
+			// Filtre par entrepot de l'utilisateur
+			if(!empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER) && !empty($user->array_options['options_entrepot_preferentiel'])) {
+				$line->stock = $produit->stock_warehouse[$user->array_options['options_entrepot_preferentiel']]->real;
+			}
 			//Filtrer stock uniquement des entrepôts en conf
-			if(!empty($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE)){
+			elseif(!empty($conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE)){
 				$line->stock = 0;
 				//Récupération des entrepôts valide
 				$TIdWarehouse = explode(',', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
