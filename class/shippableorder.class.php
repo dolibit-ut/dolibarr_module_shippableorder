@@ -103,7 +103,34 @@ class ShippableOrder
 				}
 
 			} elseif($line->product_type==1) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
-				if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) $this->order->total_ht_to_ship -= $line->total_ht;
+				
+				// Prise en compte des quantité déjà expédiées
+				$qtyAlreadyShipped = $this->order->expeditions[$line->id];
+				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
+				
+				// Prise en compte des quantité déjà expédiées
+				$qtyAlreadyShipped = $this->order->expeditions[$line->id];
+				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
+				
+				$isshippable = $this->isLineShippable($line, $TSomme);
+				
+				// Expédiable si toute la quantité est expédiable
+				if($isshippable == 1) {
+					$this->nbShippable++;
+				}
+				
+				if($isshippable == 2) {
+					$this->nbPartiallyShippable++;
+				}
+				
+				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
+					$this->nbProduct++;
+				}
+				
+				if (empty($conf->global->STOCK_SUPPORTS_SERVICES)){
+					$this->order->total_ht_to_ship -= $line->total_ht;
+				}
+				
 			}
 		}
 	}
