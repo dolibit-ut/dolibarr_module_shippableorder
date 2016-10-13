@@ -30,6 +30,7 @@ if (! $res) {
 
 // Libraries
 require_once DOL_DOCUMENT_ROOT . "/core/lib/admin.lib.php";
+require_once DOL_DOCUMENT_ROOT . "/core/class/extrafields.class.php";
 require_once '../lib/shippableorder.lib.php';
 dol_include_once('/abricot/includes/class/class.form.core.php');
 
@@ -52,8 +53,11 @@ if (preg_match('/set_(.*)/',$action,$reg))
 {
 
 	$code=$reg[1];
+	
 	$value = GETPOST($code);
 	if(is_array($value))$value = implode(',',$value);
+	
+	if($code === 'SHIPPABLEORDER_ENTREPOT_BY_USER' && !empty($value)) create_extrafield('entrepot_preferentiel', 'Entrepôt préférentiel', 'sellist', 'user', array('options'=>array('entrepot:label:rowid'=>'')));
 	
 	if (dolibarr_set_const($db, $code, $value, 'chaine', 0, '', $conf->entity) > 0)
 	{
@@ -79,6 +83,8 @@ if (preg_match('/del_(.*)/',$action,$reg))
 		dol_print_error($db);
 	}
 }
+
+$ent_by_user_activated = !empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER);
 
 /*
  * View
@@ -116,7 +122,9 @@ $formdoli=new Form($db);
 // Add shipment as titles in invoice
 $var=!$var;
 print '<tr '.$bc[$var].'>';
-print '<td>'.$langs->trans("StockEntrepot").'</td>';
+print '<td>'.($ent_by_user_activated ? '<s>' : '').$langs->trans("StockEntrepot").($ent_by_user_activated ? '</s>' : '');
+if($ent_by_user_activated) print ' <span style="color:red;">'.$langs->trans('EntrepotByUserActivated').'</span>';
+print '</td>';
 print '<td align="center" width="20">&nbsp;</td>';
 print '<td align="right" width="300">';
 print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
@@ -137,6 +145,20 @@ foreach($formprod->cache_warehouses as $id=>$ent) {
 
 echo $formDoli->multiselectarray('SHIPPABLEORDER_SPECIFIC_WAREHOUSE',$TWareHouse,explode(',', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE));
 
+print '<input type="submit" '.($ent_by_user_activated ? 'disabled="disabled"' : '').' class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+
+// Entrepot par utilisateur
+$var=!$var;
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("EntrepotByUser").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_ENTREPOT_BY_USER">';
+print $formdoli->selectyesno("SHIPPABLEORDER_ENTREPOT_BY_USER",$conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER,1);
 print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
 print '</form>';
 print '</td></tr>';
@@ -257,3 +279,12 @@ print '</table>';
 llxFooter();
 
 $db->close();
+
+function create_extrafield($code, $label, $type, $elementtype, $options=array()) {
+	
+	global $db;
+	
+	$e = new ExtraFields($db);
+	$e->addExtraField($code, $label, $type, '', '', $elementtype, 0, 0, '', $options);
+	
+}
