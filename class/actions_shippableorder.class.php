@@ -46,10 +46,14 @@ class ActionsShippableorder
 					
 					$stock = $shippableOrder->orderLineStockStatus($line,true);
 					
-					$hevea_tools = new HeveaTools($db);
-					$TInfosStock = $hevea_tools->getInfosStockProduct($user, $line->fk_product);
-					
-					if(!empty($TInfosStock['dt_receive'])) $stock.= '<br/> Liv. : '.$TInfosStock['dt_receive'].'';
+					if($line->fk_product > 0) {
+						
+						$hevea_tools = new HeveaTools($db);
+						$TInfosStock = $hevea_tools->getInfosStockProduct($user, $line->fk_product);
+						
+						if(!empty($TInfosStock['dt_receive'])) $stock.= '<br/> Liv. : '.$TInfosStock['dt_receive'].'';
+						
+					}
 					
 					?>
 					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
