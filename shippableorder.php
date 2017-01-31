@@ -550,7 +550,8 @@ if ($resql) {
 	
 	if ($num > 0 && $user->rights->expedition->creer) {
 		print '<input type="hidden" name="action" value="createShipping"/>';
-		print '<br /><input style="float:right" class="butAction" type="submit" name="subCreateShip" value="' . $langs->trans('CreateShipmentButton') . '" />';
+		// Spécifique hévéa, ils ne souhaitent pas avoir le bouton (demandé sur le fichier avancement projet hévéa)
+		//print '<br /><input style="float:right" class="butAction" type="submit" name="subCreateShip" value="' . $langs->trans('CreateShipmentButton') . '" />';
 		if ($conf->global->SHIPPABLEORDER_ALLOW_CHANGE_STATUS_WITHOUT_SHIPMENT) {
 			print '<input style="float:right" class="butAction" type="submit" name="subSetSent" value="' . $langs->trans('SetOrderSentButton') . '" />';
 		}
