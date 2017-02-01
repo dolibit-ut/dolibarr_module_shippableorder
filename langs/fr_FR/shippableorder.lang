@@ -58,3 +58,10 @@ DisableAutoRedirect=Désactiver la redirection automatique après création des 
 DisableAutoCheckOrder=Ne pas pré-cocher les commande expédiables
 
 Available=Disponible
+
+FilesWereRemoved=Fichiers PDF supprimés
+ArchiveFiles=Archiver les fichiers PDF
+DeleteAllFiles=Supprimer les fichiers PDF
+ConfirmDeleteAllFiles=Confirmer la suppression irréversible ?
+FilesArchived=Fichiers PDF archivés
+

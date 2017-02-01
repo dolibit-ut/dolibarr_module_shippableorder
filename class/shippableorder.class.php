@@ -294,6 +294,69 @@ class ShippableOrder
 		else return 0; 
 		
 	}
+	
+	function removeAllPDFFile() {
+		global $conf, $langs;
+		$dir = $conf->shippableorder->multidir_output[$conf->entity].'/';
+		
+		$TFile = dol_dir_list( $dir );
+			
+		$inputfile = array();
+		foreach($TFile as $file) {
+				
+			$ext = pathinfo($file['fullname'], PATHINFO_EXTENSION);
+			if($ext == 'pdf') {
+				$ret = dol_delete_file($file['fullname'], 0, 0, 0);
+			}
+		}
+		
+		
+	}
+	function zipFiles() {
+		global $conf, $langs;
+
+		if (defined('ODTPHP_PATHTOPCLZIP'))
+		{
+		
+			include_once ODTPHP_PATHTOPCLZIP.'/pclzip.lib.php';
+				
+			$dir = $conf->shippableorder->multidir_output[$conf->entity].'/';
+			
+			$file = 'archive_'.date('Ymdhis').'.zip';
+			
+			if(file_exists($file))	unlink($file);
+					
+				$archive = new PclZip($dir.$file);
+		
+				$TFile = dol_dir_list( $dir );
+					
+				$inputfile = array();
+				foreach($TFile as $file) {
+					
+					$ext = pathinfo($file['fullname'], PATHINFO_EXTENSION);
+					if($ext == 'pdf') {
+						$inputfile[] = $file['fullname'];
+					}
+				}
+				if(count($inputfile)==0){
+					setEventMessage($langs->trans('NoFileInDirectory'),'warnings');
+					return;
+				}
+				
+				
+				$archive->add($inputfile, PCLZIP_OPT_REMOVE_PATH, $dir);
+				
+				setEventMessage($langs->trans('FilesArchived'));
+				
+				$this->removeAllPDFFile();
+		}
+		else {
+		
+			print "ERREUR : Librairie Zip non trouvée";
+		}
+		
+	}
+	
 	/**
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
@@ -357,7 +420,7 @@ class ShippableOrder
 			}
 			
 			if($nbShippingCreated > 0) {
-				if($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) $this->generate_global_pdf($TFiles);	
+				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);	
 				
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
 				$dol_version = (float) DOL_VERSION;
