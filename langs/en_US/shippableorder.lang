@@ -46,3 +46,4 @@ AllowShippingIfNotEnoughStock=Allow shipment creation even if stock is too low
 AutoValidateShipping=Shipment are automatically validated
 DisableAutoRedirect=Don't redirect to shipment list after shipment creation
 DisableAutoCheckOrder=Don't check orders by default
+DontCheckDreftShippingQuantities=Don't check draft shipping quantities in shippable lines counting 
