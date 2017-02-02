@@ -479,7 +479,8 @@ class ShippableOrder
 		dol_mkdir($diroutputpdf);
 
 		// Save merged file
-		$filename=strtolower(dol_sanitizeFileName($langs->transnoentities("OrderShipped")));
+		$filename=strtolower(dol_string_nospecial(dol_sanitizeFileName($langs->transnoentities("OrderShipped"))));
+		
 		if ($pagecount)
 		{
 			$now=dol_now();
@@ -487,6 +488,8 @@ class ShippableOrder
 			$pdf->Output($file,'F');
 			if (! empty($conf->global->MAIN_UMASK))
 			@chmod($file, octdec($conf->global->MAIN_UMASK));
+			
+			//var_dump($file,$diroutputpdf,$filename,$pagecount);exit;
 		}
 		else
 		{

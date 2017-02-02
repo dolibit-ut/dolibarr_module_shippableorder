@@ -27,6 +27,8 @@ dol_include_once('/product/class/html.formproduct.class.php');
 $langs->load('orders');
 $langs->load('deliveries');
 $langs->load('companies');
+$langs->load('bills');
+$langs->load('stocks');
 $langs->load('shippableorder@shippableorder');
 
 $orderyear = GETPOST("orderyear", "int");
