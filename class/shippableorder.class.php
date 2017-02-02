@@ -84,9 +84,12 @@ class ShippableOrder
 			if (!empty($conf->global->SHIPPABLE_ORDER_ALLOW_ALL_LINE) || ($line->product_type==0 && $line->fk_product>0))
 			{
 				// Prise en compte des quantité déjà expédiéesz
-				if(empty($conf->global->SHIPPABLEORDER_DONT_CHECK_DRAFT_SHIPPING_QTY)
-				   || !$this->isDraftShipping($line->id))
-				$qtyAlreadyShipped = $this->order->expeditions[$line->id];
+				if(empty($conf->global->SHIPPABLEORDER_DONT_CHECK_DRAFT_SHIPPING_QTY) || !$this->isDraftShipping($line->id)) {
+					
+					$qtyAlreadyShipped = $this->order->expeditions[$line->id];
+					
+				}
+				
 				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
 				
 				$isshippable = $this->isLineShippable($line, $TSomme);
@@ -127,6 +130,8 @@ class ShippableOrder
 			$res = $db->fetch_object($resql);
 			if(empty($res->fk_statut)) return true;
 		}
+		
+		return false;
 		
 	}
 	
