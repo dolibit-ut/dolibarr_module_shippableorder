@@ -304,7 +304,7 @@ class ShippableOrder
 		$inputfile = array();
 		foreach($TFile as $file) {
 				
-			$ext = pathinfo($file['fullname'], PATHINFO_EXTENSION);
+			$ext = strtolower( pathinfo($file['fullname'], PATHINFO_EXTENSION) );
 			if($ext == 'pdf') {
 				$ret = dol_delete_file($file['fullname'], 0, 0, 0);
 			}
@@ -333,7 +333,7 @@ class ShippableOrder
 				$inputfile = array();
 				foreach($TFile as $file) {
 					
-					$ext = pathinfo($file['fullname'], PATHINFO_EXTENSION);
+					$ext =strtolower(  pathinfo($file['fullname'], PATHINFO_EXTENSION) );
 					if($ext == 'pdf') {
 						$inputfile[] = $file['fullname'];
 					}
