@@ -17,6 +17,7 @@
 require 'config.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/date.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/lib/files.lib.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.formother.class.php';
 require_once DOL_DOCUMENT_ROOT . '/commande/class/commande.class.php';
@@ -43,6 +44,7 @@ $socid = GETPOST('socid', 'int');
 $search_user = GETPOST('search_user', 'int');
 $search_sale = GETPOST('search_sale', 'int');
 $search_status = GETPOST('search_status');
+$search_status_cmd = GETPOST('search_status_cmd');
 if (!is_array($search_status) && $search_status <= 0) {
 	$search_status = array();
 } else $search_status = (array)$search_status;
@@ -183,6 +185,7 @@ if (GETPOST("button_removefilter_x")) {
 	$deliverymonth = '';
 	$deliveryyear = '';
 	$search_status = array();
+	$search_status_cmd = '';
 }
 
 /**
@@ -283,7 +286,8 @@ if ($search_user > 0) {
 	$sql .= " AND ec.fk_c_type_contact = tc.rowid AND tc.element='commande' AND tc.source='internal' AND ec.element_id = c.rowid AND ec.fk_socpeople = " . $search_user;
 }
 
-$sql .= ' AND c.fk_statut IN (1,2)';
+if($search_status_cmd > 0) $sql.= ' AND c.fk_statut = '.$search_status_cmd;
+else $sql .= ' AND c.fk_statut IN (1,2)';
 // var_dump($conf->global->STOCK_SUPPORTS_SERVICES);
 if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 	$sql .= ' AND cd.product_type = 0';
@@ -332,6 +336,8 @@ if ($resql) {
 	if (!empty($search_status)) {
 		foreach($search_status as $status) $param .= '&search_status[]=' . $status;
 	}
+	if($search_status_cmd > 0)
+		$param .= '&search_status_cmd=' . $search_status_cmd;
 	if ($limit === false)
 		$param .= '&show_all=1';
 	
@@ -416,7 +422,13 @@ if ($resql) {
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">&nbsp;</td>';
+    print '<td class="liste_titre maxwidthonsmartphone" align="right">';
+	$liststatus=array(
+	    '1'=>$langs->trans("StatusOrderValidated"), 
+	    '2'=>$langs->trans("StatusOrderSentShort"), 
+	);
+	print $form->selectarray('search_status_cmd', $liststatus, $search_status_cmd, 1);
+    print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre" align="right">' . $shippableOrder->selectShippableOrderStatus('search_status', $search_status) . '</td>';
 	// print '<td class="liste_titre">&nbsp;</td>';
