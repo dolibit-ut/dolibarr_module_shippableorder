@@ -44,7 +44,7 @@ $socid = GETPOST('socid', 'int');
 $search_user = GETPOST('search_user', 'int');
 $search_sale = GETPOST('search_sale', 'int');
 $search_status = GETPOST('search_status');
-$search_status_cmd=GETPOST('viewstatut');
+$search_status_cmd = GETPOST('search_status_cmd');
 if (!is_array($search_status) && $search_status <= 0) {
 	$search_status = array();
 } else $search_status = (array)$search_status;
@@ -336,6 +336,8 @@ if ($resql) {
 	if (!empty($search_status)) {
 		foreach($search_status as $status) $param .= '&search_status[]=' . $status;
 	}
+	if($search_status_cmd > 0)
+		$param .= '&search_status_cmd=' . $search_status_cmd;
 	if ($limit === false)
 		$param .= '&show_all=1';
 	
@@ -425,7 +427,7 @@ if ($resql) {
 	    '1'=>$langs->trans("StatusOrderValidated"), 
 	    '2'=>$langs->trans("StatusOrderSentShort"), 
 	);
-	print $form->selectarray('viewstatut', $liststatus, $search_status_cmd, 1);
+	print $form->selectarray('search_status_cmd', $liststatus, $search_status_cmd, 1);
     print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre" align="right">' . $shippableOrder->selectShippableOrderStatus('search_status', $search_status) . '</td>';
