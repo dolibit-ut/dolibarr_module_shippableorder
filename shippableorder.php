@@ -416,7 +416,7 @@ if ($resql) {
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">>&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre" align="right">' . $shippableOrder->selectShippableOrderStatus('search_status', $search_status) . '</td>';
 	// print '<td class="liste_titre">&nbsp;</td>';
