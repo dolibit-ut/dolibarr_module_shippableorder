@@ -81,6 +81,10 @@ $hookmanager->initHooks(array(
  * Actions
  */
 
+$confirm = GETPOST('confirm');
+$formconfirm = '';
+$form=new Form($db);
+
 $action = $_REQUEST['action'];
 
 switch ($action) {
@@ -107,15 +111,52 @@ switch ($action) {
 		$file = GETPOST('file');
 		if (! empty($file)) {
 			$file = DOL_DATA_ROOT . '/shippableorder/' . $file;
+						
 			$ret = dol_delete_file($file, 0, 0, 0);
-			if ($ret)
+			if ($ret) {
 				setEventMessage($langs->trans("FileWasRemoved", GETPOST('file')));
-			else
+			}
+			else {
 				setEventMessage($langs->trans("ErrorFailToDeleteFile", GETPOST('file')), 'errors');
+			}
 		}
 		
 		break;
 	
+		case 'delete_all_pdf_files':
+			$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"], $langs->trans('DeleteAllFiles'), $langs->trans('ConfirmDeleteAllFiles'), 'confirm_delete_all_pdf_files', '', 'no', 1);
+		
+		
+			break;
+		case 'confirm_delete_all_pdf_files':
+			if($confirm == 'yes') {
+					
+				$order = new ShippableOrder($db);
+				$order->removeAllPDFFile();
+					
+				setEventMessage($langs->trans("FilesWereRemoved"));
+			}
+		
+			break;
+		
+					
+		case 'archive_files':
+		
+		$formconfirm = $form->formconfirm($_SERVER["PHP_SELF"], $langs->trans('ArchiveFiles'), $langs->trans('ConfirmArchiveFiles'), 'confirm_archive_files', '', 'no', 1);
+		
+		break;
+	
+	case 'confirm_archive_files':
+		
+		if($confirm == 'yes') {
+			
+			$order = new ShippableOrder($db);
+			$order->zipFiles();
+			
+		}
+		
+		break;
+		
 	default :
 		
 		break;
@@ -159,6 +200,8 @@ $companystatic = new Societe($db);
 
 $help_url = "EN:Module_Customers_Orders|FR:Module_Commandes_Clients|ES:Módulo_Pedidos_de_clientes";
 llxHeader('', $langs->trans("ShippableOrders"), $help_url);
+
+echo $formconfirm;
 ?>
 <script type="text/javascript">
 $(document).ready(function() {
@@ -373,7 +416,7 @@ if ($resql) {
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">>&nbsp;</td>';
+	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre" align="right">' . $shippableOrder->selectShippableOrderStatus('search_status', $search_status) . '</td>';
 	// print '<td class="liste_titre">&nbsp;</td>';
@@ -573,12 +616,16 @@ if ($resql) {
 	</table>
 
 <?php
-	
 	if ($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) {
 		print '<br><br>';
 		// We disable multilang because we concat already existing pdf.
 		$formfile = new FormFile($db);
 		$formfile->show_documents('shippableorder', '', $diroutputpdf, $urlsource, false, true, '', 1, 1, 0, 48, 1, $param, $langs->trans("GlobalGeneratedFiles"));
+		
+		echo '<div class="tabsAction">';
+		echo '<a class="butAction" href="?action=archive_files">'.$langs->trans('ArchiveFiles').'</a>';
+		echo '<a class="butAction" href="?action=delete_all_pdf_files">'.$langs->trans('DeleteAllFiles').'</a>';
+		echo '</div>';
 	}
 	
 	$db->free($resql);

@@ -59,3 +59,10 @@ DisableAutoCheckOrder=Ne pas pré-cocher les commande expédiables
 DontCheckDreftShippingQuantities=Ne pas prendre en compte les expéditions au statut brouillon dans le calcul des quantités expédiables
 
 Available=Disponible
+
+FilesWereRemoved=Fichiers PDF supprimés
+ArchiveFiles=Archiver les fichiers PDF
+DeleteAllFiles=Supprimer les fichiers PDF
+ConfirmDeleteAllFiles=Confirmer la suppression irréversible ?
+FilesArchived=Fichiers PDF archivés
+
