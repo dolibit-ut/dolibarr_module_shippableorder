@@ -5,17 +5,17 @@ require_once DOL_DOCUMENT_ROOT.'/product/stock/class/entrepot.class.php';
 class ShippableOrder
 {
 	function __construct (&$db) {
-		
+
 		global $langs, $user;
-		
+
 		$langs->load('shippableorder@shippableorder');
-		
+
 		$this->TlinesShippable = array();
 		$this->order = null;
 		$this->nbProduct = 0;
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
-		
+
 		$this->statusShippable =array(
 				 1=>array(
 						'trans'=>$langs->trans('LegendEnStock'),
@@ -34,11 +34,11 @@ class ShippableOrder
 						'transshort'=>$langs->trans('LegendAlreadyShippedShort'),
 						'picto'=>img_picto('LegendAlreadyShippedShort', 'statut5.png'))
 				);
-		
+
 		$this->db = & $db;
-		
+
 		$this->TProduct = array(); // Tableau des produits chargés pour éviter de recharger les même plusieurs fois
-		
+
 		$this->TWarehouses = array();
 		if(!empty($user->array_options['options_entrepot_preferentiel'])) {
 			$e = new Entrepot($this->db);
@@ -49,37 +49,37 @@ class ShippableOrder
 				}
 			}
 		}
-		
+
 	}
-	
-	
+
+
 	public function selectShippableOrderStatus($htmlname='search_status', $selected) {
 		require_once DOL_DOCUMENT_ROOT.'/core/class/html.form.class.php';
-		
+
 		$form = new Form($this->db);
-		
+
 		foreach($this->statusShippable as $statusdesckey=>$statusdescval) {
 			$arrayselect[$statusdesckey] = $statusdescval['transshort'];
 		}
-		
+
 		if(method_exists($form, 'multiselectarray')) {
 			return $form->multiselectarray($htmlname, $arrayselect,$selected, 1, 0, '', 0, '161');
 		} else {
 			return $form->selectarray($htmlname, $arrayselect,$selected[0], 1);
 		}
-		
+
 	}
-	
+
 	function isOrderShippable($idOrder){
 		global $conf;
-		
+
 		$db = &$this->db;
-		
+
 		$this->order = new Commande($db);
 		$this->order->fetch($idOrder);
 		$this->order->loadExpeditions();
 		$this->order->fetchObjectLinked('','','','shipping');
-		
+
 		// Calcul du montant restant à expédier
 		$this->order->total_ht_shipped = 0;
 		if(!empty($this->order->linkedObjects['shipping'])) {
@@ -88,42 +88,42 @@ class ShippableOrder
 			}
 		}
 		$this->order->total_ht_to_ship = $this->order->total_ht - $this->order->total_ht_shipped;
-		
+
 		$this->nbShippable = 0;
 		$this->nbPartiallyShippable = 0;
 		$this->nbProduct = 0;
-		
+
 		$TSomme = array();
 		foreach($this->order->lines as &$line){
-			
+
 			if (!empty($conf->global->SHIPPABLE_ORDER_ALLOW_ALL_LINE) || ($line->product_type==0 && $line->fk_product>0))
 			{
 				// Prise en compte des quantité déjà expédiéesz
 				if(empty($conf->global->SHIPPABLEORDER_DONT_CHECK_DRAFT_SHIPPING_QTY) || !$this->isDraftShipping($line->id)) {
-					
+
 					$qtyAlreadyShipped = $this->order->expeditions[$line->id];
-					
+
 				}
-				
+
 				$line->qty_toship = $line->qty - $qtyAlreadyShipped;
-				
+
 				$isshippable = $this->isLineShippable($line, $TSomme);
-				
+
 				// Expédiable si toute la quantité est expédiable
 				if($isshippable == 1) {
 					$this->nbShippable++;
 				}
-				
+
 				if($isshippable == 2) {
 					$this->nbPartiallyShippable++;
 				}
-				
+
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
 					$this->nbProduct++;
 				}
 
 			} elseif($line->product_type==1) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
-					
+
 					if (empty($conf->global->STOCK_SUPPORTS_SERVICES)){
 						$this->order->total_ht_to_ship -= $line->total_ht;
 					}
@@ -132,27 +132,49 @@ class ShippableOrder
 	}
 
 	function isDraftShipping($fk_origin_line) {
-		
+
 		global $db;
-		
+
 		$sql = 'SELECT e.fk_statut
 				FROM '.MAIN_DB_PREFIX.'expedition e
 				INNER JOIN '.MAIN_DB_PREFIX.'expeditiondet ed ON (ed.fk_expedition = e.rowid)
 				WHERE fk_origin_line = '.$fk_origin_line;
-				
+
 		$resql = $db->query($sql);
 		if($resql) {
 			$res = $db->fetch_object($resql);
 			if(empty($res->fk_statut)) return true;
 		}
-		
+
 		return false;
-		
+
 	}
-	
+
+	function isDraftShippingForOrder($order_id) {
+
+		global $db;
+
+		if (!empty($order_id)){
+			$sql = 'SELECT e.fk_statut
+					FROM '.MAIN_DB_PREFIX.'expedition e
+					INNER JOIN '.MAIN_DB_PREFIX.'expeditiondet ed ON (ed.fk_expedition = e.rowid)
+					INNER JOIN '.MAIN_DB_PREFIX.'commandedet as cd ON cd.rowid=ed.fk_origin_line
+					INNER JOIN '.MAIN_DB_PREFIX.'commande as c ON c.rowid=cd.fk_commande AND c.rowid='.$order_id;
+
+
+			$resql = $db->query($sql);
+			if($resql) {
+				while ($res = $db->fetch_object($resql)) {
+					if(empty($res->fk_statut)) return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	function isLineShippable(&$line, &$TSomme) {
 		global $conf, $user;
-		
+
 		$db = &$this->db;
 
 		$TSomme[$line->fk_product] += $line->qty_toship;
@@ -167,7 +189,7 @@ class ShippableOrder
 				$produit = &$this->TProduct[$line->fk_product];
 			}
 			$line->stock = $produit->stock_reel;
-			
+
 			// Filtre par entrepot de l'utilisateur
 			if(!empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER) && !empty($this->TWarehouses)) {
 				$line->stock = 0;
@@ -180,7 +202,7 @@ class ShippableOrder
 				$line->stock = 0;
 				//Récupération des entrepôts valide
 				$TIdWarehouse = explode(',', $conf->global->SHIPPABLEORDER_SPECIFIC_WAREHOUSE);
-				
+
 				foreach($produit->stock_warehouse as $identrepot => $objecttemp ){
 					if(in_array($identrepot, $TIdWarehouse)){
 						$line->stock +=  $objecttemp->real;
@@ -205,23 +227,23 @@ class ShippableOrder
 			$isShippable = 2;
 			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $line->stock;
 		}
-		
+
 		$this->TlinesShippable[$line->id] = array('stock'=>$line->stock,'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
-		
+
 		return $isShippable;
 	}
-	
+
 	/**
-	 * 
+	 *
 	 * @param string $short
 	 * @param string $mode
 	 * @return string|unknown
 	 */
 	function orderStockStatus($short = true, $mode = 'txt') {
 		global $langs;
-		
+
 		$txt = '';
-		
+
 		if ($this->nbProduct == 0) {
 			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
 			$code=4;
@@ -238,13 +260,13 @@ class ShippableOrder
 			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
 			$code=2;
 		}
-		
+
 		$label = 'NbProductShippable';
 		if ($short)
 			$label = 'NbProductShippableShort';
-		
+
 		$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
-		
+
 		if ($mode == 'txt') {
 			return $txt;
 		} elseif ($mode == 'code') {
@@ -253,23 +275,23 @@ class ShippableOrder
 			return $txt;
 		}
 	}
-	
+
 	function orderLineStockStatus(&$line, $withStockVisu = false){
 		global $langs;
-		
+
 		if(isset($this->TlinesShippable[$line->id])) {
 			$isShippable = $this->TlinesShippable[$line->id];
 		} else {
 			return '';
 		}
-		
+
 		$infos = '';
-		
+
 		// Produit déjà totalement expédié
 		if($isShippable['to_ship'] <= 0) {
 			$pictopath = img_picto('', 'statut5.png', '', false, 1);
 		}
-		
+
 		// Produit avec un reste à expédier
 		else if($isShippable['shippable'] == 1) {
 			$pictopath = img_picto('', 'statut4.png', '', false, 1);
@@ -278,103 +300,103 @@ class ShippableOrder
 		} else {
 			$pictopath = img_picto('', 'statut1.png', '', false, 1);
 		}
-		
+
 		$infos = $langs->trans('QtyInStock', $isShippable['stock']);
 		$infos.= " - ".$langs->trans('RemainToShip', $isShippable['to_ship']);
 		$infos.= " - ".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
-		
+
 		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
 		if($isShippable['to_ship'] > 0 && $isShippable['to_ship'] != $line->qty) {
 			$picto.= ' ('.$isShippable['to_ship'].')';
 		}
-		
+
 		if($withStockVisu) {
-			return $isShippable['stock'].' '.$picto;	
+			return $isShippable['stock'].' '.$picto;
 		}
 		else{
-			return $picto;	
+			return $picto;
 		}
-		
-		
+
+
 	}
-	
+
 	function is_ok_for_shipping(){
 		if($this->nbProduct == $this->nbShippable && $this->nbShippable != 0) return true;
-		
+
 		return false;
 	}
-	
+
 	function orderCommandeByClient($TIDCommandes) {
-		
+
 		$db = &$this->db;
-		
+
 		$TCommande = array();
 		//var_dump($TIDCommandes);
 		foreach($TIDCommandes as $id_commande) {
 			$o=new Commande($db);
 			$o->fetch($id_commande);
-			
+
 			if($o->statut != 3) $TCommande[] = $o;
-				
+
 		}
-		
+
 		usort($TCommande, array('ShippableOrder','_sort_by_client'));
-		
+
 		$TIDCommandes=array();
 		foreach($TCommande as &$o ) {
-			
+
 			$TIDCommandes[] = $o->id;
 		}
-		
+
 		//var_dump($TIDCommandes);
 		return $TIDCommandes;
 	}
 	function _sort_by_client(&$a, &$b) {
-			
+
 		if($a->socid < $b->socid) return -1;
 		else if($a->socid > $b->socid) return 1;
-		else return 0; 
-		
+		else return 0;
+
 	}
-	
+
 	function removeAllPDFFile() {
 		global $conf, $langs;
 		$dir = $conf->shippableorder->multidir_output[$conf->entity].'/';
-		
+
 		$TFile = dol_dir_list( $dir );
-			
+
 		$inputfile = array();
 		foreach($TFile as $file) {
-				
+
 			$ext = strtolower( pathinfo($file['fullname'], PATHINFO_EXTENSION) );
 			if($ext == 'pdf') {
 				$ret = dol_delete_file($file['fullname'], 0, 0, 0);
 			}
 		}
-		
-		
+
+
 	}
 	function zipFiles() {
 		global $conf, $langs;
 
 		if (defined('ODTPHP_PATHTOPCLZIP'))
 		{
-		
+
 			include_once ODTPHP_PATHTOPCLZIP.'/pclzip.lib.php';
-				
+
 			$dir = $conf->shippableorder->multidir_output[$conf->entity].'/';
-			
+
 			$file = 'archive_'.date('Ymdhis').'.zip';
-			
+
 			if(file_exists($file))	unlink($file);
-					
+
 				$archive = new PclZip($dir.$file);
-		
+
 				$TFile = dol_dir_list( $dir );
-					
+
 				$inputfile = array();
 				foreach($TFile as $file) {
-					
+
 					$ext =strtolower(  pathinfo($file['fullname'], PATHINFO_EXTENSION) );
 					if($ext == 'pdf') {
 						$inputfile[] = $file['fullname'];
@@ -384,45 +406,45 @@ class ShippableOrder
 					setEventMessage($langs->trans('NoFileInDirectory'),'warnings');
 					return;
 				}
-				
-				
+
+
 				$archive->add($inputfile, PCLZIP_OPT_REMOVE_PATH, $dir);
-				
+
 				setEventMessage($langs->trans('FilesArchived'));
-				
+
 				$this->removeAllPDFFile();
 		}
 		else {
-		
+
 			print "ERREUR : Librairie Zip non trouvée";
 		}
-		
+
 	}
-	
+
 	/**
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
 	function createShipping($TIDCommandes, $TEnt_comm) {
 		global $user, $langs, $conf;
-		
+
 		$db = &$this->db;
-		
+
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
-		
+
 		// Option pour la génération PDF
 		$hidedetails = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
 		$hidedesc = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
 		$hideref = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
-		
+
 		$nbShippingCreated = 0;
-		
+
 		if(count($TIDCommandes) > 0) {
-			
+
 			$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
-			
+
 			foreach($TIDCommandes as $id_commande) {
-				
+
 				$this->isOrderShippable($id_commande);
 
 				$shipping = new Expedition($db);
@@ -431,7 +453,7 @@ class ShippableOrder
 				$shipping->date_delivery = $this->order->date_livraison;
 				$shipping->note_public = $this->order->note_public;
 				$shipping->note_private = $this->order->note_private;
-				
+
 				$shipping->weight_units = 0;
 				$shipping->weight = "NULL";
 				$shipping->sizeW = "NULL";
@@ -440,7 +462,7 @@ class ShippableOrder
 				$shipping->size_units = 0;
 				$shipping->socid = $this->order->socid;
 				$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
-				
+
 				foreach($this->order->lines as $line) {
 					if($this->TlinesShippable[$line->id]['stock'] > 0) {
 						$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
@@ -449,27 +471,27 @@ class ShippableOrder
 
 				$nbShippingCreated++;
 				$shipping->create($user);
-				
+
 				// Valider l'expédition
-				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
+				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING))
 				{
 					$shipping->statut = 0;
 					$shipping->valid($user);
-				} 
-				
+				}
+
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
-			
+
 			if($nbShippingCreated > 0) {
-				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);	
-				
+				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);
+
 				setEventMessage($langs->trans('NbShippingCreated', $nbShippingCreated));
 				$dol_version = (float) DOL_VERSION;
-				
+
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+					header("Location: ".$_SERVER["PHP_SELF"]);
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -479,10 +501,10 @@ class ShippableOrder
 			else{
 				setEventMessage($langs->trans('NoOrderSelectedOrAlreadySent'), 'warnings');
 				$dol_version = (float) DOL_VERSION;
-				
+
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+					header("Location: ".$_SERVER["PHP_SELF"]);
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -492,10 +514,10 @@ class ShippableOrder
 		} else {
 			setEventMessage($langs->trans('NoOrderSelectedOrAlreadySent'), 'warnings');
 			$dol_version = (float) DOL_VERSION;
-			
+
 			if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 			{
-				header("Location: ".$_SERVER["PHP_SELF"]);					
+				header("Location: ".$_SERVER["PHP_SELF"]);
 			}else{
 				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 				else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -506,14 +528,14 @@ class ShippableOrder
 
 	function shipment_generate_pdf(&$shipment, $hidedetails, $hidedesc, $hideref) {
 		global $conf, $langs;
-		
+
 		$db = &$this->db;
 		// Il faut recharger les lignes qui viennent juste d'être créées
 		$shipment->fetch($shipment->id);
 		/*echo '<pre>';
 		print_r($shipment);
 		exit;*/
-		
+
 		$outputlangs = $langs;
 		if ($conf->global->MAIN_MULTILANGS) {$newlang=$shipment->client->default_lang;}
 		if (! empty($newlang)) {
@@ -521,20 +543,20 @@ class ShippableOrder
 			$outputlangs->setDefaultLang($newlang);
 		}
 		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
-		
+
 		if($result > 0) {
 			$objectref = dol_sanitizeFileName($shipment->ref);
 			$dir = $conf->expedition->dir_output . "/sending/" . $objectref;
 			$file = $dir . "/" . $objectref . ".pdf";
 			return $file;
 		}
-		
+
 		return '';
 	}
 
 	function generate_global_pdf($TFiles) {
 		global $langs, $conf;
-		
+
         // Create empty PDF
         $pdf=pdf_getInstance();
         if (class_exists('TCPDF'))
@@ -566,7 +588,7 @@ class ShippableOrder
 
 		// Save merged file
 		$filename=strtolower(dol_string_nospecial(dol_sanitizeFileName($langs->transnoentities("OrderShipped"))));
-		
+
 		if ($pagecount)
 		{
 			$now=dol_now();
@@ -574,7 +596,7 @@ class ShippableOrder
 			$pdf->Output($file,'F');
 			if (! empty($conf->global->MAIN_UMASK))
 			@chmod($file, octdec($conf->global->MAIN_UMASK));
-			
+
 			//var_dump($file,$diroutputpdf,$filename,$pagecount);exit;
 		}
 		else
