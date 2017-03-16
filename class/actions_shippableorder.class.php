@@ -48,9 +48,10 @@ class ActionsShippableorder
 					?>
 					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
 					<?php
-				}
-				
-				?>
+				} ?>
+				$('table#tablelines tr.liste_titre_add td.linecoldescription').first().after('<td class="linecolstock" align="right"></td>');
+				$('table#tablelines tr.liste_titre_add').next().children('td.linecoldescription').first().after('<td class="linecolstock" align="right"></td>');
+
 			</script>
 			<?php
 		}
