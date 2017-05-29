@@ -12,7 +12,7 @@ class ActionsShippableorder
     {  
       	global $db, $langs;
 		
-		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
+		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3 && $object->id > 0) 
         {
         	dol_include_once('/shippableorder/class/shippableorder.class.php');
 			
