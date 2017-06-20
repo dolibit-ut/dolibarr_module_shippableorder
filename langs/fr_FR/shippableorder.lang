@@ -66,3 +66,4 @@ DeleteAllFiles=Supprimer les fichiers PDF
 ConfirmDeleteAllFiles=Confirmer la suppression irréversible ?
 FilesArchived=Fichiers PDF archivés
 
+ConfirmArchiveFiles=Êtes-vous sûr de vouloir archiver les documents PDF ?
