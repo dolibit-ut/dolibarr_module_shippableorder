@@ -442,6 +442,12 @@ class ShippableOrder
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
+
+			$TURL = array();
+			foreach($_REQUEST as $k=>$v) {
+				if($k!='TIDCommandes' && $k!='TEnt_comm' && $k!='action' && $k!='subCreateShip') $TURL[$k] = $v;
+			}
+//var_dump($TURL);exit;
 			
 			if($nbShippingCreated > 0) {
 				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);	
@@ -451,7 +457,8 @@ class ShippableOrder
 				
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+
+					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -464,7 +471,7 @@ class ShippableOrder
 				
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));

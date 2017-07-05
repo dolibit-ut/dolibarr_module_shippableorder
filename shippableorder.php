@@ -357,7 +357,7 @@ if ($resql) {
 	}
 	
 	// Lignes des champs de filtre
-	print '<form method="GET" action="' . $_SERVER["PHP_SELF"] . '">';
+	print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
 	
 	print '<table class="noborder" width="100%">';
 	
@@ -441,9 +441,9 @@ if ($resql) {
 	print '<a href="#" id="checkall">' . $langs->trans("All") . '</a> / <a href="#" id="checknone">' . $langs->trans("None") . '</a>';
 	print '</td>';
 	print '</tr>';
-	print '</form>';
+/*	print '</form>';
 	print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
-	
+*/	
 	$var = true;
 	$total = 0;
 	$totaltoship = 0;
