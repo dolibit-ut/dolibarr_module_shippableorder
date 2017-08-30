@@ -435,6 +435,7 @@ class ShippableOrder
 				// Valider l'expédition
 				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
 				{
+					if (empty($shipping->ref)) $shipping->ref = '(PROV'.$shipping->id.')';
 					$shipping->statut = 0;
 					$shipping->valid($user);
 				} 
