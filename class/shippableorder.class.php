@@ -510,7 +510,8 @@ class ShippableOrder
 			$outputlangs = new Translate("",$conf);
 			$outputlangs->setDefaultLang($newlang);
 		}
-		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
+		if((float)DOL_VERSION > 5) $result=$shipment->generateDocument($shipment->modelpdf, $outputlangs,$hidedetails, $hidedesc, $hideref);
+		else $result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
 		
 		if($result > 0) {
 			$objectref = dol_sanitizeFileName($shipment->ref);
