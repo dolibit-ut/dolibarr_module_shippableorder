@@ -435,6 +435,7 @@ class ShippableOrder
 				// Valider l'expédition
 				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
 				{
+					if (empty($shipping->ref)) $shipping->ref = '(PROV'.$shipping->id.')';
 					$shipping->statut = 0;
 					$shipping->valid($user);
 				} 
@@ -442,6 +443,12 @@ class ShippableOrder
 				// Génération du PDF
 				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 			}
+
+			$TURL = array();
+			foreach($_REQUEST as $k=>$v) {
+				if($k!='TIDCommandes' && $k!='TEnt_comm' && $k!='action' && $k!='subCreateShip') $TURL[$k] = $v;
+			}
+//var_dump($TURL);exit;
 			
 			if($nbShippingCreated > 0) {
 				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);	
@@ -451,7 +458,8 @@ class ShippableOrder
 				
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+
+					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -464,7 +472,7 @@ class ShippableOrder
 				
 				if ($conf->global->SHIPPABLE_ORDER_DISABLE_AUTO_REDIRECT)
 				{
-					header("Location: ".$_SERVER["PHP_SELF"]);					
+					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
 					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
 					else header("Location: ".dol_buildpath('/expedition/list.php',2));
@@ -502,7 +510,8 @@ class ShippableOrder
 			$outputlangs = new Translate("",$conf);
 			$outputlangs->setDefaultLang($newlang);
 		}
-		$result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
+		if((float)DOL_VERSION > 5) $result=$shipment->generateDocument($shipment->modelpdf, $outputlangs,$hidedetails, $hidedesc, $hideref);
+		else $result=expedition_pdf_create($db, $shipment, $shipment->modelpdf, $outputlangs, $hidedetails, $hidedesc, $hideref);
 		
 		if($result > 0) {
 			$objectref = dol_sanitizeFileName($shipment->ref);
