@@ -64,7 +64,7 @@ $limit = (GETPOST('show_all')==1) ? false : $conf->liste_limit;
 $diroutputpdf=$conf->shippableorder->multidir_output[$conf->entity];
 
 // Initialize technical object to manage hooks of thirdparties. Note that conf->hooks_modules contains array array
-$hookmanager->initHooks(array('orderlist'));
+$hookmanager->initHooks(array('shippableorderlist'));
 
 /**
  * Actions
