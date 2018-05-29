@@ -562,7 +562,7 @@ if ($resql) {
 				$default_wharehouse = $res2->rowid;
 			}
 			
-			if ($shippableOrder->nbProduct > 0) {
+			if ($shippableOrder->nbShippable > 0) {
 				// TEnt_comm[] : clef = id_commande val = id_entrepot
 				print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $objp->rowid . ']', '', 1) . '</td>';
 				/*echo strtotime($objp->date_livraison);exit;
