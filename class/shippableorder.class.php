@@ -188,7 +188,7 @@ class ShippableOrder
 			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $line->stock;
 		}
 		
-		$this->TlinesShippable[$line->id] = array('stock'=>$line->stock,'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
+		$this->TlinesShippable[$line->id] = array('stock'=>price2num($line->stock, 'MS'),'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
 		
 		return $isShippable;
 	}
