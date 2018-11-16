@@ -188,7 +188,7 @@ class ShippableOrder
 			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $line->stock;
 		}
 		
-		$this->TlinesShippable[$line->id] = array('stock'=>$line->stock,'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
+		$this->TlinesShippable[$line->id] = array('stock'=>price2num($line->stock, 'MS'),'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
 		
 		return $isShippable;
 	}
@@ -461,8 +461,8 @@ class ShippableOrder
 
 					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
-					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
-					else header("Location: ".dol_buildpath('/expedition/list.php',2));
+					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',1));
+					else header("Location: ".dol_buildpath('/expedition/list.php',1));
 					exit;
 				}
 			}
@@ -474,8 +474,8 @@ class ShippableOrder
 				{
 					header("Location: ".$_SERVER["PHP_SELF"].'?'.http_build_query($TURL) );					
 				}else{
-					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
-					else header("Location: ".dol_buildpath('/expedition/list.php',2));
+					if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',1));
+					else header("Location: ".dol_buildpath('/expedition/list.php',1));
 					exit;
 				}
 			}
@@ -487,8 +487,8 @@ class ShippableOrder
 			{
 				header("Location: ".$_SERVER["PHP_SELF"]);					
 			}else{
-				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',2));
-				else header("Location: ".dol_buildpath('/expedition/list.php',2));
+				if ($dol_version <= 3.6) header("Location: ".dol_buildpath('/expedition/liste.php',1));
+				else header("Location: ".dol_buildpath('/expedition/list.php',1));
 				exit;
 			}
 		}
