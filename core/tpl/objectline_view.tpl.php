@@ -239,7 +239,7 @@ if(isset($this->shippableorder)) {
 
 
 	<?php
-	if ($this->statut == 0  && ($object_rights->creer)) { ?>
+	if ($this->statut == 0  && ($object_rights->creer) && $action != 'selectlines' ) { ?>
 	<td class="linecoledit" align="center"><?php $coldisplay++; ?>
 		<?php if (($line->info_bits & 2) == 2 || ! empty($disableedit)) { ?>
 		<?php } else { ?>
@@ -279,7 +279,9 @@ if(isset($this->shippableorder)) {
 <?php } else { ?>
 	<td colspan="3"><?php $coldisplay=$coldisplay+3; ?></td>
 <?php } ?>
-
+	<?php  if($action == 'selectlines'){ ?>
+	<td class="linecolcheck" align="center"><input type="checkbox" class="linecheckbox" name="line_checkbox[<?php echo $i+1; ?>]" value="<?php echo $line->id; ?>" ></td>
+	<?php } ?>
 <?php
 //Line extrafield
 if (!empty($extrafieldsline))
