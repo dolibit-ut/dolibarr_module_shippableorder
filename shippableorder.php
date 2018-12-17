@@ -45,6 +45,7 @@ $search_user = GETPOST('search_user', 'int');
 $search_sale = GETPOST('search_sale', 'int');
 $search_status = GETPOST('search_status');
 $search_status_cmd = GETPOST('search_status_cmd');
+$sproduct = GETPOST('sproduct');
 if (!is_array($search_status) && $search_status <= 0) {
 	$search_status = array();
 } else $search_status = (array)$search_status;
@@ -185,6 +186,7 @@ if (GETPOST("button_removefilter_x")) {
 	$deliverymonth = '';
 	$deliveryyear = '';
 	$search_status = array();
+	$sproduct = '';
 	$search_status_cmd = '';
 }
 
@@ -218,18 +220,30 @@ $(document).ready(function() {
 </script>
 <?php
 
-$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
-$sql .= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+	$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, cd.total_ht, c.ref_client, cd.rowid as lineid, cd.subprice, cd.fk_product,';
+	$sql .= ' c.date_valid, c.date_commande, c.note_private, cde.date_de_livraison as date_livraison, c.fk_statut, c.facture as facturee,';
+
+}
+else
+{
+	$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
+	$sql .= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+}
 if ($conf->clinomadic->enabled) {
 	$sql .= " ce.reglement_recu,";
 }
-
-$sql .= ' (SELECT SUM(qty) FROM ' . MAIN_DB_PREFIX . 'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))  $sql .= 'cd.qty as qty_prod';
+else $sql .= ' (SELECT SUM(qty) FROM ' . MAIN_DB_PREFIX . 'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
 $sql .= ' FROM ' . MAIN_DB_PREFIX . 'societe as s';
 $sql .= ', ' . MAIN_DB_PREFIX . 'commande as c';
 $sql .= ', ' . MAIN_DB_PREFIX . 'commandedet as cd';
 if ($conf->clinomadic->enabled) {
 	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "commande_extrafields as ce ON (ce.fk_object = cd.fk_commande)";
+}
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "commandedet_extrafields as cde ON (cde.fk_object = cd.rowid)";
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "product as prod ON (prod.rowid = cd.fk_product)";
 }
 // We'll need this table joined to the select in order to filter by sale
 if ($search_sale > 0 || (! $user->rights->societe->client->voir && ! $socid))
@@ -277,6 +291,9 @@ if ($deliverymonth > 0) {
 if (! empty($snom)) {
 	$sql .= natural_search('s.nom', $snom);
 }
+if (! empty($sproduct)) {
+	$sql .= natural_search('prod.ref', $sproduct);
+}
 if (! empty($sref_client)) {
 	$sql .= ' AND c.ref_client LIKE \'%' . $db->escape($sref_client) . '%\'';
 }
@@ -293,7 +310,10 @@ if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 	$sql .= ' AND cd.product_type = 0';
 }
 
-$sql .= ' GROUP BY c.rowid ORDER BY ' . $sortfield . ' ' . $sortorder;
+
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql.= ' GROUP BY cd.rowid,cde.date_de_livraison ';
+else $sql .= ' GROUP BY c.rowid';
+$sql.=  ' ORDER BY ' . $sortfield . ' ' . $sortorder;
 if ($limit > 0) {
 	$sql2 = $sql;
 	$sql .= $db->plimit($limit + 1, $offset);
@@ -375,6 +395,10 @@ if ($resql) {
 		$moreforfilter .= $langs->trans('LinkedToSpecificUsers') . ': ';
 		$moreforfilter .= $form->select_dolusers($search_user, 'search_user', 1);
 	}
+	
+	if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+		$moreforfilter = '<td></td>';
+	}
 	if (! empty($moreforfilter)) {
 		print '<tr class="liste_titre">';
 		print '<td class="liste_titre" colspan="10">';
@@ -391,10 +415,22 @@ if ($resql) {
 	if ($conf->clinomadic->enabled)
 		print_liste_field_titre($langs->trans('Règlement'), $_SERVER["PHP_SELF"], 'c.ref_client', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('RefCustomerOrder'), $_SERVER["PHP_SELF"], 'c.ref_client', '', $param, '', $sortfield, $sortorder);
+	if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+		print_liste_field_titre($langs->trans('Product'), $_SERVER["PHP_SELF"], '', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('Company'), $_SERVER["PHP_SELF"], 's.nom', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('OrderDate'), $_SERVER["PHP_SELF"], 'c.date_commande', '', $param, 'align="right"', $sortfield, $sortorder);
-	print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'c.date_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
-	print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'c.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+	{
+		print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'cde.date_de_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
+
+		print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'cd.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	}
+	else
+	{
+		print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'c.date_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
+
+		print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'c.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	}
 	print_liste_field_titre($langs->trans('AmountHTToShip'), $_SERVER["PHP_SELF"], '', '', $param, 'align="right"', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('Status'), $_SERVER["PHP_SELF"], 'c.fk_statut', '', $param, 'align="right"', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'), $_SERVER["PHP_SELF"], 'qty_prod', '', $param, 'align="right"', $sortfield, $sortorder);
@@ -415,6 +451,11 @@ if ($resql) {
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" size="6" name="sref_client" value="' . $sref_client . '">';
 	print '</td>';
+	if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+		print '<td class="liste_titre" align="left">';
+		print '<input class="flat" type="text" size="6" name="sproduct" value="' . $sproduct . '">';
+		print '</td>';
+	}
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" name="snom" value="' . $snom . '">';
 	print '</td>';
@@ -502,6 +543,13 @@ if ($resql) {
 			
 			// Ref customer
 			print '<td>' . $objp->ref_client . '</td>';
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) {
+				// fk product
+				dol_include_once('/product/class/product.class.php');
+				$prod = new Product($db);
+				$prod->fetch($objp->fk_product);
+				print '<td>' . $prod->getNomUrl(1) . '</td>';
+			}
 			
 			// Company
 			$companystatic->id = $objp->socid;
@@ -535,9 +583,12 @@ if ($resql) {
 			
 			// Amount HT
 			print '<td align="right" class="nowrap">' . price($objp->total_ht) . '</td>';
-			
+
 			// Amount HT remain to ship
-			print '<td align="right" class="nowrap">' . price(round($shippableOrder->order->total_ht_to_ship, 2)) . '</td>';
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+				print '<td align="right" class="nowrap">' . price(round($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']*$objp->subprice, 2)) . '</td>';
+			}
+			else print '<td align="right" class="nowrap">' . price(round($shippableOrder->order->total_ht_to_ship, 2)) . '</td>';
 			
 			// Statut
 			print '<td align="right" class="nowrap">' . $generic_commande->LibStatut($objp->fk_statut, $objp->facturee, 5) . '</td>';
@@ -546,7 +597,7 @@ if ($resql) {
 			print '<td align="right" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
-			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus() . '</td>';
+			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
 			
 			if (! empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
 				$default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
@@ -561,28 +612,32 @@ if ($resql) {
 				$res2 = $db->fetch_object($resql2);
 				$default_wharehouse = $res2->rowid;
 			}
-			
-			if ($shippableOrder->nbShippable > 0) {
+			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']- $objp->qty_prod) >=0) 
+				|| (empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)&&$shippableOrder->nbShippable > 0)) {
+				
 				// TEnt_comm[] : clef = id_commande val = id_entrepot
 				print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $objp->rowid . ']', '', 1) . '</td>';
 				/*echo strtotime($objp->date_livraison);exit;
 				 echo dol_now();exit;*/
 				
 				// Checkbox pour créer expédition
-				$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) $checked = $shippableOrder->is_ok_for_shipping($objp->lineid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				else $checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
 				if ($conf->global->SHIPPABLEORDER_NO_DEFAULT_CHECK) {
 					$checked = false;
 				}
 				
 				print '<td align="right" class="nowrap">' . '<input class="checkforgen" type="checkbox" ' . $checked . ' name="TIDCommandes[]" value="' . $objp->rowid . '" />' . '</td>';
 			} else {
+				
 				print '<td colspan="2">&nbsp;</td>';
 			}
 			
 			print '</tr>';
 			
 			$total += $objp->total_ht;
-			$totaltoship += $shippableOrder->order->total_ht_to_ship;
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$totaltoship += $shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']*$objp->subprice;
+			else $totaltoship += $shippableOrder->order->total_ht_to_ship;
 			$subtotal += $objp->total_ht;
 			$i ++;
 		}
@@ -595,8 +650,8 @@ if ($resql) {
 		} else {
 			print '<td align="left">' . $langs->trans("TotalHTforthispage") . '</td>';
 		}
-		
-		print '<td colspan="5" align="right"">' . price($total);
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) print '<td colspan="6" align="right"">' . price($total) . '</td>';
+		else print '<td colspan="5" align="right"">' . price($total) . '</td>';
 		print '<td align="right"">' . price($totaltoship) . '<td colspan="5"></td>';
 		print '</tr>';
 	}

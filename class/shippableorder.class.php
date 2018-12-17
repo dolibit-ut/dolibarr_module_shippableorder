@@ -96,17 +96,20 @@ class ShippableOrder
 				
 				// Expédiable si toute la quantité est expédiable
 				if($isshippable == 1) {
+					$line->nbShippable++;
 					$this->nbShippable++;
 				}
 				
 				if($isshippable == 2) {
+					$line->nbPartiallyShippable++;
 					$this->nbPartiallyShippable++;
 				}
 				
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
+					$line->nbProduct++;
 					$this->nbProduct++;
 				}
-
+				
 			} elseif($line->product_type==1) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
 					
 					if (empty($conf->global->STOCK_SUPPORTS_SERVICES)){
@@ -199,33 +202,55 @@ class ShippableOrder
 	 * @param string $mode
 	 * @return string|unknown
 	 */
-	function orderStockStatus($short = true, $mode = 'txt') {
-		global $langs;
+	function orderStockStatus($short = true, $mode = 'txt', $lineid=null) {
+		global $langs, $conf;
 		
 		$txt = '';
-		
-		if ($this->nbProduct == 0) {
-			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
-			$code=4;
-		} else if ($this->nbProduct == $this->nbShippable) {
-			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
-			$code=1;
-		} else if ($this->nbPartiallyShippable > 0) {
-			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-			$code=2;
-		} else if ($this->nbShippable == 0) {
-			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
-			$code=3;
-		} else {
-			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-			$code=2;
+		$obj = $this;
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && $lineid>0){
+			foreach($this->order->lines as $line){
+				if($line->id == $lineid){
+					$obj = $line;
+					break;
+				}
+			}
 		}
-		
+
+		if ($obj->nbProduct == 0)
+		{
+			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
+			$code = 4;
+		}
+		else if ($obj->nbProduct == $obj->nbShippable)
+		{
+			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
+			$code = 1;
+		}
+		else if ($obj->nbPartiallyShippable > 0)
+		{
+			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
+			$code = 2;
+		}
+		else if ($obj->nbShippable == 0)
+		{
+			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
+			$code = 3;
+		}
+		else
+		{
+			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
+			$code = 2;
+		}
+
+
+
+
+
 		$label = 'NbProductShippable';
 		if ($short)
 			$label = 'NbProductShippableShort';
 		
-		$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
 		
 		if ($mode == 'txt') {
 			return $txt;
@@ -280,8 +305,20 @@ class ShippableOrder
 		
 	}
 	
-	function is_ok_for_shipping(){
-		if($this->nbProduct == $this->nbShippable && $this->nbShippable != 0) return true;
+	function is_ok_for_shipping($lineid=''){
+		global $conf;
+		$obj=$this;
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && $lineid>0){
+			foreach($this->order->lines as $line){
+				if($line->id == $lineid){
+					$obj = $line;
+					break;
+				}
+			}
+		
+		}
+		
+		if($obj->nbProduct == $obj->nbShippable && $obj->nbShippable != 0) return true;
 		
 		return false;
 	}
