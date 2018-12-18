@@ -499,7 +499,7 @@ if ($resql) {
 		$shippableOrder->isOrderShippable($objp->rowid);
 		
 		if (! empty($search_status)) {
-			$result = $shippableOrder->orderStockStatus(true, 'code');
+			$result = $shippableOrder->orderStockStatus(true, 'code', $objp->lineid);
 			
 			if(!in_array($result, $search_status)) {
 				$BdisplayLine = false;
@@ -615,19 +615,27 @@ if ($resql) {
 			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']- $objp->qty_prod) >=0) 
 				|| (empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)&&$shippableOrder->nbShippable > 0)) {
 				
+				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) $checkId=$objp->lineid;
+				else $checkId=$objp->rowid;
 				// TEnt_comm[] : clef = id_commande val = id_entrepot
-				print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $objp->rowid . ']', '', 1) . '</td>';
 				/*echo strtotime($objp->date_livraison);exit;
 				 echo dol_now();exit;*/
 				
 				// Checkbox pour créer expédition
-				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) $checked = $shippableOrder->is_ok_for_shipping($objp->lineid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
-				else $checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+					print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $checkId . ']', '', 1,'',$objp->fk_product) . '</td>';
+					$checked = $shippableOrder->is_ok_for_shipping($objp->lineid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				}
+				else {
+					
+					print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $checkId . ']', '', 1) . '</td>';
+					$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				}
 				if ($conf->global->SHIPPABLEORDER_NO_DEFAULT_CHECK) {
 					$checked = false;
 				}
 				
-				print '<td align="right" class="nowrap">' . '<input class="checkforgen" type="checkbox" ' . $checked . ' name="TIDCommandes[]" value="' . $objp->rowid . '" />' . '</td>';
+				print '<td align="right" class="nowrap">' . '<input class="checkforgen" type="checkbox" ' . $checked . ' name="TIDCommandes[]" value="' . $checkId . '" />' . '</td>';
 			} else {
 				
 				print '<td colspan="2">&nbsp;</td>';
@@ -661,7 +669,7 @@ if ($resql) {
 	if ($num > 0 && $user->rights->expedition->creer) {
 		print '<input type="hidden" name="action" value="createShipping"/>';
 		print '<br /><input style="float:right" class="butAction" type="submit" name="subCreateShip" value="' . $langs->trans('CreateShipmentButton') . '" />';
-		if ($conf->global->SHIPPABLEORDER_ALLOW_CHANGE_STATUS_WITHOUT_SHIPMENT) {
+		if ($conf->global->SHIPPABLEORDER_ALLOW_CHANGE_STATUS_WITHOUT_SHIPMENT && empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) {
 			print '<input style="float:right" class="butAction" type="submit" name="subSetSent" value="' . $langs->trans('SetOrderSentButton') . '" />';
 		}
 	}

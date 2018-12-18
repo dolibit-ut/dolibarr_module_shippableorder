@@ -428,57 +428,126 @@ class ShippableOrder
 		
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
-		
+
 		// Option pour la génération PDF
-		$hidedetails = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
-		$hidedesc = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
-		$hideref = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
-		
+		$hidedetails = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
+		$hidedesc = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
+		$hideref = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
+
 		$nbShippingCreated = 0;
-		
-		if(count($TIDCommandes) > 0) {
-			
-			$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
-			
-			foreach($TIDCommandes as $id_commande) {
-				
-				$this->isOrderShippable($id_commande);
 
-				$shipping = new Expedition($db);
-				$shipping->origin = 'commande';
-				$shipping->origin_id = $id_commande;
-				$shipping->date_delivery = $this->order->date_livraison;
-				$shipping->note_public = $this->order->note_public;
-				$shipping->note_private = $this->order->note_private;
+		if (count($TIDCommandes) > 0)
+		{
+			if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+			{
+				$TToShip = $this->groupLineByOrder($TIDCommandes); //On fait une expédition par commande
 				
-				$shipping->weight_units = 0;
-				$shipping->weight = "NULL";
-				$shipping->sizeW = "NULL";
-				$shipping->sizeH = "NULL";
-				$shipping->sizeS = "NULL";
-				$shipping->size_units = 0;
-				$shipping->socid = $this->order->socid;
-				$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
-				
-				foreach($this->order->lines as $line) {
-					if($this->TlinesShippable[$line->id]['stock'] > 0) {
-						$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
-					}
-				}
-
-				$nbShippingCreated++;
-				$shipping->create($user);
-				
-				// Valider l'expédition
-				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
+				foreach ($TToShip as $id_commande => $lineids)
 				{
-					if (empty($shipping->ref)) $shipping->ref = '(PROV'.$shipping->id.')';
-					$shipping->statut = 0;
-					$shipping->valid($user);
-				} 
-				
-				// Génération du PDF
-				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+
+					$this->isOrderShippable($id_commande);
+
+					$shipping = new Expedition($db);
+					$shipping->origin = 'commande';
+					$shipping->origin_id = $id_commande;
+					$shipping->date_delivery = $this->order->date_livraison;
+					$shipping->note_public = $this->order->note_public;
+					$shipping->note_private = $this->order->note_private;
+
+					$shipping->weight_units = 0;
+					$shipping->weight = "NULL";
+					$shipping->sizeW = "NULL";
+					$shipping->sizeH = "NULL";
+					$shipping->sizeS = "NULL";
+					$shipping->size_units = 0;
+					$shipping->socid = $this->order->socid;
+					$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
+
+					foreach ($this->order->lines as $line)
+					{
+						if ($this->TlinesShippable[$line->id]['stock'] > 0 && in_array($line->id, $lineids))
+						{
+							
+							if (! empty($conf->productbatch->enabled) && ! empty($line->fk_product) && ! empty($line->product_tobatch)){
+								dol_include_once('/product/class/product.class.php');
+								$product = new Product($db);
+								$product->fetch($line->fk_product);
+								$product->load_stock('warehouseopen');
+								if(is_object($product->stock_warehouse[$TEnt_comm[$line->id]]) && count($product->stock_warehouse[$TEnt_comm[$line->id]]->detail_batch)){
+									var_dump($product->stock_warehouse[$TEnt_comm[$line->id]]->detail_batch);exit;
+								}
+							}else {
+								$shipping->addline($TEnt_comm[$line->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+							}
+		
+						
+						}
+					}
+
+					$nbShippingCreated++;
+					$shipping->create($user);
+
+					// Valider l'expédition
+					if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING))
+					{
+						if (empty($shipping->ref))
+							$shipping->ref = '(PROV'.$shipping->id.')';
+						$shipping->statut = 0;
+						$shipping->valid($user);
+					}
+
+					// Génération du PDF
+					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
+						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+				}
+			} else {
+				$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
+
+				foreach ($TIDCommandes as $id_commande)
+				{
+
+					$this->isOrderShippable($id_commande);
+
+					$shipping = new Expedition($db);
+					$shipping->origin = 'commande';
+					$shipping->origin_id = $id_commande;
+					$shipping->date_delivery = $this->order->date_livraison;
+					$shipping->note_public = $this->order->note_public;
+					$shipping->note_private = $this->order->note_private;
+
+					$shipping->weight_units = 0;
+					$shipping->weight = "NULL";
+					$shipping->sizeW = "NULL";
+					$shipping->sizeH = "NULL";
+					$shipping->sizeS = "NULL";
+					$shipping->size_units = 0;
+					$shipping->socid = $this->order->socid;
+					$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
+
+					foreach ($this->order->lines as $line)
+					{
+						if ($this->TlinesShippable[$line->id]['stock'] > 0)
+						{
+							$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+						}
+					}
+
+					$nbShippingCreated++;
+					$shipping->create($user);
+
+					// Valider l'expédition
+					if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING))
+					{
+						if (empty($shipping->ref))
+							$shipping->ref = '(PROV'.$shipping->id.')';
+						$shipping->statut = 0;
+						$shipping->valid($user);
+					}
+
+					// Génération du PDF
+					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
+						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+				}
 			}
 
 			$TURL = array();
@@ -529,6 +598,23 @@ class ShippableOrder
 				exit;
 			}
 		}
+	}
+	
+	function groupLineByOrder($TIDCommandeDet = array()){
+		global $db;
+		$TOrderLine = array();
+		if(!empty($TIDCommandeDet)){
+			foreach($TIDCommandeDet as $orderline_id){
+				$sql = "SELECT fk_commande FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid=".$orderline_id;
+				$resql = $db->query($sql);
+				if(!empty($resql)){
+					$obj = $db->fetch_object($resql);
+					if(!empty($TOrderLine[$obj->fk_commande]))$TOrderLine[$obj->fk_commande][]=$orderline_id;
+					else $TOrderLine[$obj->fk_commande] = array($orderline_id);
+				}
+			}
+		}
+		return $TOrderLine;
 	}
 
 	function shipment_generate_pdf(&$shipment, $hidedetails, $hidedesc, $hideref) {
