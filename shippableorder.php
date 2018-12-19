@@ -30,6 +30,8 @@ $langs->load('deliveries');
 $langs->load('companies');
 $langs->load('bills');
 $langs->load('stocks');
+$langs->load('products');
+$langs->load('other');
 $langs->load('shippableorder@shippableorder');
 
 $orderyear = GETPOST("orderyear", "int");
@@ -278,15 +280,29 @@ if ($ordermonth > 0) {
 } else if ($orderyear > 0) {
 	$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_get_first_day($orderyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, 12, false)) . "'";
 }
-if ($deliverymonth > 0) {
+if ($deliverymonth > 0)
+{
 	if ($deliveryyear > 0 && empty($day))
-		$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false)) . "' AND '" . $db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false)) . "'";
-	else if ($deliveryyear > 0 && ! empty($day))
-		$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear)) . "'";
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false))."'";
+		else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false))."'";
+	}
+	else if ($deliveryyear > 0 && !empty($day))
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear))."' AND '".$db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear))."'";
+		else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear))."' AND '".$db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear))."'";
+
+	}
 	else
-		$sql .= " AND date_format(c.date_livraison, '%m') = '" . $deliverymonth . "'";
-} else if ($deliveryyear > 0) {
-	$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_get_first_day($deliveryyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($deliveryyear, 12, false)) . "'";
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND date_format(c.date_livraison, '%m') = '".$deliverymonth."'";
+		else $sql .= " AND date_format(cde.date_de_livraison, '%m') = '".$deliverymonth."'";
+	}
+}
+else if ($deliveryyear > 0)
+{
+	if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, 1, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, 12, false))."'";
+	else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, 1, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, 12, false))."'";
 }
 if (! empty($snom)) {
 	$sql .= natural_search('s.nom', $snom);
@@ -612,6 +628,7 @@ if ($resql) {
 				$res2 = $db->fetch_object($resql2);
 				$default_wharehouse = $res2->rowid;
 			}
+			//var_dump($shippableOrder->TlinesShippable[$objp->lineid]);exit;
 			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']- $objp->qty_prod) >=0) 
 				|| (empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)&&$shippableOrder->nbShippable > 0)) {
 				
