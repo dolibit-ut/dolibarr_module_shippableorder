@@ -428,6 +428,7 @@ class ShippableOrder
 		
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
+		dol_include_once('/core/lib/product.lib.php');
 
 		// Option pour la génération PDF
 		$hidedetails = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
@@ -473,9 +474,9 @@ class ShippableOrder
 								$product = new Product($db);
 								$product->fetch($line->fk_product);
 								$product->load_stock('warehouseopen');
-								if(is_object($product->stock_warehouse[$TEnt_comm[$line->id]]) && count($product->stock_warehouse[$TEnt_comm[$line->id]]->detail_batch)){
-									var_dump($product->stock_warehouse[$TEnt_comm[$line->id]]->detail_batch);exit;
-								}
+								$TBatch = $this->generateTBatch($line->id);
+								$shipping->addline_batch($TBatch);
+								
 							}else {
 								$shipping->addline($TEnt_comm[$line->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
 							}
@@ -495,7 +496,7 @@ class ShippableOrder
 						$shipping->statut = 0;
 						$shipping->valid($user);
 					}
-
+					//var_dump($shipping);exit;
 					// Génération du PDF
 					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
 						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
@@ -696,4 +697,35 @@ class ShippableOrder
 			setEventMessage($langs->trans('NoPDFAvailableForChecked'),'errors');
 		}
 	}
+	
+	function generateTBatch($id)
+	{
+		$TBatch = array();
+		$j = 0;
+		$qty = 'qtyl'.$id.'_'.$j;
+		$batch = 'batchl'.$id.'_'.$j;
+		$total_qty = 0;
+		$sub_qty = array();
+		while (isset($_POST[$batch]))
+		{
+			// save line of detail into sub_qty
+			$sub_qty[$j]['q'] = GETPOST($qty, 'int');	// the qty we want to move for this stock record
+			$sub_qty[$j]['id_batch'] = GETPOST($batch, 'int');  // the id into llx_product_batch of stock record to move
+			
+
+			//var_dump($qty);var_dump($batch);var_dump($sub_qty[$j]['q']);var_dump($sub_qty[$j]['id_batch']);
+			$total_qty += $sub_qty[$j]['q'];
+			$j++;
+			$qty = 'qtyl'.$id.'_'.$j;
+			$batch = 'batchl'.$id.'_'.$j;
+		}
+		
+		$TBatch['qty']=$total_qty;
+		$TBatch['ix_l']=$id;
+		$TBatch['detail']=$sub_qty;
+
+	
+		return $TBatch;
+	}
+
 }

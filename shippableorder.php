@@ -548,7 +548,7 @@ if ($resql) {
 				dol_include_once('/product/class/product.class.php');
 				$prod = new Product($db);
 				$prod->fetch($objp->fk_product);
-				print '<td>' . $prod->getNomUrl(1) . '</td>';
+				print '<td class="product" data-fk_prod="'.$objp->fk_product.'" >' . $prod->getNomUrl(1) . '</td>';
 			}
 			
 			// Company
@@ -594,7 +594,7 @@ if ($resql) {
 			print '<td align="right" class="nowrap">' . $generic_commande->LibStatut($objp->fk_statut, $objp->facturee, 5) . '</td>';
 			
 			// Quantité de produit
-			print '<td align="right" class="nowrap">' . $objp->qty_prod . '</td>';
+			print '<td align="right" class="qty" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
 			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
@@ -707,6 +707,61 @@ if ($resql) {
 	print dol_print_error($db);
 }
 
+if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+{
+	?>
+	<script type="text/javascript">
+		$(document).ready(function(){
+
+			$("select[id^='TEnt_comm']").on('change', function() {
+
+				let fk_product = $(this).closest('tr').find('td.product').data('fk_prod');
+				let qty = $(this).closest('tr').find('td.qty').html();
+				let lineid = $(this).closest('tr').find('input.checkforgen').val();
+				let tr = $(this).closest('tr');
+				$.ajax({
+					url: '<?php echo dol_buildpath('/shippableorder/script/interface.php', 1); ?>'
+					,type: 'POST'
+					,data: {
+						get: 'batchLine'
+						,qty: qty
+						,fk_product: fk_product
+						,lineid: lineid
+						,warehouse_id: this.value
+					}
+					}).done(function(data) {
+						$(".batch_"+lineid).remove();
+						tr.after(data);
+					});
+
+
+			});
+
+			$("select[id^='TEnt_comm']").each(function(){
+				let fk_product = $(this).closest('tr').find('td.product').data('fk_prod');
+				let qty = $(this).closest('tr').find('td.qty').html();
+				let lineid = $(this).closest('tr').find('input.checkforgen').val();
+				let tr = $(this).closest('tr');
+				$.ajax({
+					url: '<?php echo dol_buildpath('/shippableorder/script/interface.php', 1); ?>'
+					,type: 'POST'
+					,data: {
+						get: 'batchLine'
+						,qty: qty
+						,fk_product: fk_product
+						,lineid: lineid
+						,warehouse_id: this.value
+					}
+					}).done(function(data) {
+						$(".batch_"+lineid).remove();
+						tr.after(data);
+					});
+			});
+
+		});
+	</script>
+	<?php
+}
 llxFooter();
 
 $db->close();
