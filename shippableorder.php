@@ -476,7 +476,13 @@ if ($resql) {
 	print '<input class="flat" type="text" name="snom" value="' . $snom . '">';
 	print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre" align="center">';
+	//print $langs->trans('Month').': ';
+	
+	print '<input class="flat" type="text" size="1" maxlength="2" name="deliverymonth" value="'.$deliverymonth.'">';
+	//print '&nbsp;'.$langs->trans('Year').': ';
+	$formother->select_year($deliveryyear, 'deliveryyear', 1, 20, 5);
+	print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
     print '<td class="liste_titre maxwidthonsmartphone" align="right">';
@@ -610,7 +616,7 @@ if ($resql) {
 			print '<td align="right" class="nowrap">' . $generic_commande->LibStatut($objp->fk_statut, $objp->facturee, 5) . '</td>';
 			
 			// Quantité de produit
-			print '<td align="right" class="qty" class="nowrap">' . $objp->qty_prod . '</td>';
+			print '<td align="right" class="qty" data-qty_shippable="'.$shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'].'" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
 			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
@@ -628,8 +634,8 @@ if ($resql) {
 				$res2 = $db->fetch_object($resql2);
 				$default_wharehouse = $res2->rowid;
 			}
-			//var_dump($shippableOrder->TlinesShippable[$objp->lineid]);exit;
-			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']- $objp->qty_prod) >=0) 
+			
+			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']) >0 && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'] -  $shippableOrder->TlinesShippable[$objp->lineid]['to_ship'])==0) 
 				|| (empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)&&$shippableOrder->nbShippable > 0)) {
 				
 				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) $checkId=$objp->lineid;
@@ -733,7 +739,7 @@ if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
 			$("select[id^='TEnt_comm']").on('change', function() {
 
 				let fk_product = $(this).closest('tr').find('td.product').data('fk_prod');
-				let qty = $(this).closest('tr').find('td.qty').html();
+				let qty = $(this).closest('tr').find('td.qty').data('qty_shippable');
 				let lineid = $(this).closest('tr').find('input.checkforgen').val();
 				let tr = $(this).closest('tr');
 				$.ajax({
