@@ -211,13 +211,27 @@ llxHeader('', $langs->trans("ShippableOrders"), $help_url);
 echo $formconfirm;
 ?>
 <script type="text/javascript">
-$(document).ready(function() {
-	$("#checkall").click(function() {
-		$(".checkforgen").attr('checked', true);
-	});
-	$("#checknone").click(function() {
-		$(".checkforgen").attr('checked', false);
-	});
+$(document).ready(function() {	
+	
+	// **This check determines if using a jQuery version 1.7 or newer which requires the use of the prop function instead of the attr function when not called on an attribute
+	if ($().prop) {
+		$("#checkall").click(function() {
+			$(".checkforgen").prop('checked', true);
+		});
+		$("#checknone").click(function() {
+			$(".checkforgen").prop('checked', false);
+		});
+	  }
+	  else {
+		$("#checkall").click(function() {
+			$(".checkforgen").attr('checked', true);
+		});
+		$("#checknone").click(function() {
+			$(".checkforgen").attr('checked', false);
+		});
+	  }
+
+	
 });
 </script>
 <?php
