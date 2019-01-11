@@ -286,13 +286,13 @@ if ($sall) {
 }
 if ($ordermonth > 0) {
 	if ($orderyear > 0 && empty($day))
-		$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_get_first_day($orderyear, $ordermonth, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, $ordermonth, false)) . "'";
+		$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_get_first_day($orderyear, $ordermonth, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, $ordermonth, false)) . "'";
 	else if ($orderyear > 0 && ! empty($day))
-		$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $ordermonth, $day, $orderyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $ordermonth, $day, $orderyear)) . "'";
+		$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $ordermonth, $day, $orderyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $ordermonth, $day, $orderyear)) . "'";
 	else
-		$sql .= " AND date_format(c.date_valid, '%m') = '" . $ordermonth . "'";
+		$sql .= " AND date_format(c.date_commande, '%m') = '" . $ordermonth . "'";
 } else if ($orderyear > 0) {
-	$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_get_first_day($orderyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, 12, false)) . "'";
+	$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_get_first_day($orderyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, 12, false)) . "'";
 }
 if ($deliverymonth > 0)
 {
