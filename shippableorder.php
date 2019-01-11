@@ -533,8 +533,13 @@ if ($resql) {
 		$generic_commande->id = $objp->rowid;
 		$generic_commande->ref = $objp->ref;
 		$shippableOrder->isOrderShippable($objp->rowid);
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+			$orderLine = new OrderLine($db);
+			$orderLine->fetch($objp->lineid);
+		}
 		
 		if (! empty($search_status)) {
+			
 			$result = $shippableOrder->orderStockStatus(true, 'code', $objp->lineid);
 			
 			if(!in_array($result, $search_status)) {
@@ -622,7 +627,7 @@ if ($resql) {
 
 			// Amount HT remain to ship
 			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
-				print '<td align="right" class="nowrap">' . price(round($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']*$objp->subprice, 2)) . '</td>';
+				print '<td align="right" class="nowrap">' . price(round($shippableOrder->TlinesShippable[$objp->lineid]['to_ship']*$objp->subprice, 2)) . '</td>';
 			}
 			else print '<td align="right" class="nowrap">' . price(round($shippableOrder->order->total_ht_to_ship, 2)) . '</td>';
 			
@@ -633,7 +638,7 @@ if ($resql) {
 			print '<td align="right" class="qty" data-qty_shippable="'.$shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'].'" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
-			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
+			print  !empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)?'<td align="right" class="nowrap">' .$shippableOrder->orderLineStockStatus($orderLine,true). '</td>':'<td align="right" class="nowrap">' .$shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
 			
 			if (! empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
 				$default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
