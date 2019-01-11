@@ -227,7 +227,7 @@ class modShippableOrder extends DolibarrModules
 		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=commercial,fk_leftmenu=orders',			                // Put 0 if this is a top menu
 								'type'=>'left',			                // This is a Top menu entry
 								'titre'=>'ShippableOrdersMenu',
-								'mainmenu'=>'orders',
+								'mainmenu'=>'commercial',
 								'leftmenu'=>'shipableorder',
 								'url'=>'/shippableorder/shippableorder.php',
 								'langs'=>'shippableorder@shippableorder',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
