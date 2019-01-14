@@ -56,9 +56,9 @@ if (preg_match('/set_(.*)/',$action,$reg))
 	
 	$value = GETPOST($code);
 	if(is_array($value))$value = implode(',',$value);
-	
+
 	if($code === 'SHIPPABLEORDER_ENTREPOT_BY_USER' && !empty($value)) create_extrafield('entrepot_preferentiel', 'Entrepôt préférentiel', 'sellist', 'user', array('options'=>array('entrepot:label:rowid'=>'')));
-	
+	if($code === 'SHIPPABLEORDER_SELECT_BY_LINE' && !empty($value))create_extrafield('date_de_livraison', 'Date de livraison', 'date', 'commandedet');
 	if (dolibarr_set_const($db, $code, $value, 'chaine', 0, '', $conf->entity) > 0)
 	{
 		header("Location: ".$_SERVER["PHP_SELF"]);
@@ -286,6 +286,22 @@ print $formdoli->selectyesno("SHIPPABLEORDER_DONT_CHECK_DRAFT_SHIPPING_QTY",$con
 print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
 print '</form>';
 print '</td></tr>';
+$var=!$var;
+
+// SelectByLine
+print '<tr '.$bc[$var].'>';
+print '<td>'.$langs->trans("SelectByLine").'</td>';
+print '<td align="center" width="20">&nbsp;</td>';
+print '<td align="right" width="300">';
+print '<form method="POST" action="'.$_SERVER['PHP_SELF'].'">';
+print '<input type="hidden" name="token" value="'.$_SESSION['newtoken'].'">';
+print '<input type="hidden" name="action" value="set_SHIPPABLEORDER_SELECT_BY_LINE">';
+print $formdoli->selectyesno("SHIPPABLEORDER_SELECT_BY_LINE",$conf->global->SHIPPABLEORDER_SELECT_BY_LINE,1);
+print '<input type="submit" class="button" value="'.$langs->trans("Modify").'">';
+print '</form>';
+print '</td></tr>';
+$var=!$var;
+
 
 print '</table>';
 

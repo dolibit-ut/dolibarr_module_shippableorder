@@ -67,3 +67,6 @@ ConfirmDeleteAllFiles=Confirmer la suppression irréversible ?
 FilesArchived=Fichiers PDF archivés
 
 ConfirmArchiveFiles=Êtes-vous sûr de vouloir archiver les documents PDF ?
+
+
+SelectByLine=Sélection par ligne de commande plutôt que par commande

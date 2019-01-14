@@ -96,17 +96,20 @@ class ShippableOrder
 				
 				// Expédiable si toute la quantité est expédiable
 				if($isshippable == 1) {
+					$line->nbShippable++;
 					$this->nbShippable++;
 				}
 				
 				if($isshippable == 2) {
+					$line->nbPartiallyShippable++;
 					$this->nbPartiallyShippable++;
 				}
 				
 				if($this->TlinesShippable[$line->id]['to_ship'] > 0) {
+					$line->nbProduct++;
 					$this->nbProduct++;
 				}
-
+				
 			} elseif($line->product_type==1) { // On ne doit pas tenir compte du montant des services (et notament les frais de port) dans la colonne montant HT restant à expédier
 					
 					if (empty($conf->global->STOCK_SUPPORTS_SERVICES)){
@@ -199,33 +202,55 @@ class ShippableOrder
 	 * @param string $mode
 	 * @return string|unknown
 	 */
-	function orderStockStatus($short = true, $mode = 'txt') {
-		global $langs;
+	function orderStockStatus($short = true, $mode = 'txt', $lineid=null) {
+		global $langs, $conf;
 		
 		$txt = '';
-		
-		if ($this->nbProduct == 0) {
-			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
-			$code=4;
-		} else if ($this->nbProduct == $this->nbShippable) {
-			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
-			$code=1;
-		} else if ($this->nbPartiallyShippable > 0) {
-			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-			$code=2;
-		} else if ($this->nbShippable == 0) {
-			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
-			$code=3;
-		} else {
-			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
-			$code=2;
+		$obj = $this;
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && $lineid>0){
+			foreach($this->order->lines as $line){
+				if($line->id == $lineid){
+					$obj = $line;
+					break;
+				}
+			}
 		}
-		
+
+		if ($obj->nbProduct == 0)
+		{
+			$txt .= img_picto($langs->trans('TotallyShipped'), 'statut5.png');
+			$code = 4;
+		}
+		else if ($obj->nbProduct == $obj->nbShippable)
+		{
+			$txt .= img_picto($langs->trans('EnStock'), 'statut4.png');
+			$code = 1;
+		}
+		else if ($obj->nbPartiallyShippable > 0)
+		{
+			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
+			$code = 2;
+		}
+		else if ($obj->nbShippable == 0)
+		{
+			$txt .= img_picto($langs->trans('HorsStock'), 'statut8.png');
+			$code = 3;
+		}
+		else
+		{
+			$txt .= img_picto($langs->trans('StockPartiel'), 'statut1.png');
+			$code = 2;
+		}
+
+
+
+
+
 		$label = 'NbProductShippable';
 		if ($short)
 			$label = 'NbProductShippableShort';
 		
-		$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$txt .= ' ' . $langs->trans($label, $this->nbShippable, $this->nbProduct);
 		
 		if ($mode == 'txt') {
 			return $txt;
@@ -280,8 +305,20 @@ class ShippableOrder
 		
 	}
 	
-	function is_ok_for_shipping(){
-		if($this->nbProduct == $this->nbShippable && $this->nbShippable != 0) return true;
+	function is_ok_for_shipping($lineid=''){
+		global $conf;
+		$obj=$this;
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && $lineid>0){
+			foreach($this->order->lines as $line){
+				if($line->id == $lineid){
+					$obj = $line;
+					break;
+				}
+			}
+		
+		}
+		
+		if($obj->nbProduct == $obj->nbShippable && $obj->nbShippable != 0) return true;
 		
 		return false;
 	}
@@ -391,57 +428,127 @@ class ShippableOrder
 		
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
-		
+		dol_include_once('/core/lib/product.lib.php');
+
 		// Option pour la génération PDF
-		$hidedetails = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
-		$hidedesc = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
-		$hideref = (! empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
-		
+		$hidedetails = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
+		$hidedesc = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
+		$hideref = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
+
 		$nbShippingCreated = 0;
-		
-		if(count($TIDCommandes) > 0) {
-			
-			$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
-			
-			foreach($TIDCommandes as $id_commande) {
-				
-				$this->isOrderShippable($id_commande);
 
-				$shipping = new Expedition($db);
-				$shipping->origin = 'commande';
-				$shipping->origin_id = $id_commande;
-				$shipping->date_delivery = $this->order->date_livraison;
-				$shipping->note_public = $this->order->note_public;
-				$shipping->note_private = $this->order->note_private;
+		if (count($TIDCommandes) > 0)
+		{
+			if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+			{
+				$TToShip = $this->groupLineByOrder($TIDCommandes); //On fait une expédition par commande
 				
-				$shipping->weight_units = 0;
-				$shipping->weight = "NULL";
-				$shipping->sizeW = "NULL";
-				$shipping->sizeH = "NULL";
-				$shipping->sizeS = "NULL";
-				$shipping->size_units = 0;
-				$shipping->socid = $this->order->socid;
-				$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
-				
-				foreach($this->order->lines as $line) {
-					if($this->TlinesShippable[$line->id]['stock'] > 0) {
-						$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
-					}
-				}
-
-				$nbShippingCreated++;
-				$shipping->create($user);
-				
-				// Valider l'expédition
-				if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING)) 
+				foreach ($TToShip as $id_commande => $lineids)
 				{
-					if (empty($shipping->ref)) $shipping->ref = '(PROV'.$shipping->id.')';
-					$shipping->statut = 0;
-					$shipping->valid($user);
-				} 
-				
-				// Génération du PDF
-				if(!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF)) $TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+
+					$this->isOrderShippable($id_commande);
+
+					$shipping = new Expedition($db);
+					$shipping->origin = 'commande';
+					$shipping->origin_id = $id_commande;
+					$shipping->date_delivery = $this->order->date_livraison;
+					$shipping->note_public = $this->order->note_public;
+					$shipping->note_private = $this->order->note_private;
+
+					$shipping->weight_units = 0;
+					$shipping->weight = "NULL";
+					$shipping->sizeW = "NULL";
+					$shipping->sizeH = "NULL";
+					$shipping->sizeS = "NULL";
+					$shipping->size_units = 0;
+					$shipping->socid = $this->order->socid;
+					$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
+
+					foreach ($this->order->lines as $line)
+					{
+						if ($this->TlinesShippable[$line->id]['stock'] > 0 && in_array($line->id, $lineids))
+						{
+							
+							if (! empty($conf->productbatch->enabled) && ! empty($line->fk_product) && ! empty($line->product_tobatch)){
+								dol_include_once('/product/class/product.class.php');
+								$product = new Product($db);
+								$product->fetch($line->fk_product);
+								$product->load_stock('warehouseopen');
+								$TBatch = $this->generateTBatch($line->id);
+								$shipping->addline_batch($TBatch);
+								
+							}else {
+								$shipping->addline($TEnt_comm[$line->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+							}
+		
+						
+						}
+					}
+
+					$nbShippingCreated++;
+					$shipping->create($user);
+
+					// Valider l'expédition
+					if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING))
+					{
+						if (empty($shipping->ref))
+							$shipping->ref = '(PROV'.$shipping->id.')';
+						$shipping->statut = 0;
+						$shipping->valid($user);
+					}
+					//var_dump($shipping);exit;
+					// Génération du PDF
+					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
+						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+				}
+			} else {
+				$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
+
+				foreach ($TIDCommandes as $id_commande)
+				{
+
+					$this->isOrderShippable($id_commande);
+
+					$shipping = new Expedition($db);
+					$shipping->origin = 'commande';
+					$shipping->origin_id = $id_commande;
+					$shipping->date_delivery = $this->order->date_livraison;
+					$shipping->note_public = $this->order->note_public;
+					$shipping->note_private = $this->order->note_private;
+
+					$shipping->weight_units = 0;
+					$shipping->weight = "NULL";
+					$shipping->sizeW = "NULL";
+					$shipping->sizeH = "NULL";
+					$shipping->sizeS = "NULL";
+					$shipping->size_units = 0;
+					$shipping->socid = $this->order->socid;
+					$shipping->modelpdf = !empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF) ? $conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF : 'rouget';
+
+					foreach ($this->order->lines as $line)
+					{
+						if ($this->TlinesShippable[$line->id]['stock'] > 0)
+						{
+							$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+						}
+					}
+
+					$nbShippingCreated++;
+					$shipping->create($user);
+
+					// Valider l'expédition
+					if (!empty($conf->global->SHIPPABLE_ORDER_AUTO_VALIDATE_SHIPPING))
+					{
+						if (empty($shipping->ref))
+							$shipping->ref = '(PROV'.$shipping->id.')';
+						$shipping->statut = 0;
+						$shipping->valid($user);
+					}
+
+					// Génération du PDF
+					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
+						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
+				}
 			}
 
 			$TURL = array();
@@ -492,6 +599,23 @@ class ShippableOrder
 				exit;
 			}
 		}
+	}
+	
+	function groupLineByOrder($TIDCommandeDet = array()){
+		global $db;
+		$TOrderLine = array();
+		if(!empty($TIDCommandeDet)){
+			foreach($TIDCommandeDet as $orderline_id){
+				$sql = "SELECT fk_commande FROM ".MAIN_DB_PREFIX."commandedet WHERE rowid=".$orderline_id;
+				$resql = $db->query($sql);
+				if(!empty($resql)){
+					$obj = $db->fetch_object($resql);
+					if(!empty($TOrderLine[$obj->fk_commande]))$TOrderLine[$obj->fk_commande][]=$orderline_id;
+					else $TOrderLine[$obj->fk_commande] = array($orderline_id);
+				}
+			}
+		}
+		return $TOrderLine;
 	}
 
 	function shipment_generate_pdf(&$shipment, $hidedetails, $hidedesc, $hideref) {
@@ -573,4 +697,35 @@ class ShippableOrder
 			setEventMessage($langs->trans('NoPDFAvailableForChecked'),'errors');
 		}
 	}
+	
+	function generateTBatch($id)
+	{
+		$TBatch = array();
+		$j = 0;
+		$qty = 'qtyl'.$id.'_'.$j;
+		$batch = 'batchl'.$id.'_'.$j;
+		$total_qty = 0;
+		$sub_qty = array();
+		while (isset($_POST[$batch]))
+		{
+			// save line of detail into sub_qty
+			$sub_qty[$j]['q'] = GETPOST($qty, 'int');	// the qty we want to move for this stock record
+			$sub_qty[$j]['id_batch'] = GETPOST($batch, 'int');  // the id into llx_product_batch of stock record to move
+			
+
+			//var_dump($qty);var_dump($batch);var_dump($sub_qty[$j]['q']);var_dump($sub_qty[$j]['id_batch']);
+			$total_qty += $sub_qty[$j]['q'];
+			$j++;
+			$qty = 'qtyl'.$id.'_'.$j;
+			$batch = 'batchl'.$id.'_'.$j;
+		}
+		
+		$TBatch['qty']=$total_qty;
+		$TBatch['ix_l']=$id;
+		$TBatch['detail']=$sub_qty;
+
+	
+		return $TBatch;
+	}
+
 }

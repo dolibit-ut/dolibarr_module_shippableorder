@@ -30,6 +30,8 @@ $langs->load('deliveries');
 $langs->load('companies');
 $langs->load('bills');
 $langs->load('stocks');
+$langs->load('products');
+$langs->load('other');
 $langs->load('shippableorder@shippableorder');
 
 $orderyear = GETPOST("orderyear", "int");
@@ -45,6 +47,7 @@ $search_user = GETPOST('search_user', 'int');
 $search_sale = GETPOST('search_sale', 'int');
 $search_status = GETPOST('search_status');
 $search_status_cmd = GETPOST('search_status_cmd');
+$sproduct = GETPOST('sproduct');
 if (!is_array($search_status) && $search_status <= 0) {
 	$search_status = array();
 } else $search_status = (array)$search_status;
@@ -185,6 +188,7 @@ if (GETPOST("button_removefilter_x")) {
 	$deliverymonth = '';
 	$deliveryyear = '';
 	$search_status = array();
+	$sproduct = '';
 	$search_status_cmd = '';
 }
 
@@ -207,29 +211,55 @@ llxHeader('', $langs->trans("ShippableOrders"), $help_url);
 echo $formconfirm;
 ?>
 <script type="text/javascript">
-$(document).ready(function() {
-	$("#checkall").click(function() {
-		$(".checkforgen").attr('checked', true);
-	});
-	$("#checknone").click(function() {
-		$(".checkforgen").attr('checked', false);
-	});
+$(document).ready(function() {	
+	
+	// **This check determines if using a jQuery version 1.7 or newer which requires the use of the prop function instead of the attr function when not called on an attribute
+	if ($().prop) {
+		$("#checkall").click(function() {
+			$(".checkforgen").prop('checked', true);
+		});
+		$("#checknone").click(function() {
+			$(".checkforgen").prop('checked', false);
+		});
+	  }
+	  else {
+		$("#checkall").click(function() {
+			$(".checkforgen").attr('checked', true);
+		});
+		$("#checknone").click(function() {
+			$(".checkforgen").attr('checked', false);
+		});
+	  }
+
+	
 });
 </script>
 <?php
 
-$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
-$sql .= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+	$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, cd.total_ht, c.ref_client, cd.rowid as lineid, cd.subprice, cd.fk_product,';
+	$sql .= ' c.date_valid, c.date_commande, c.note_private, cde.date_de_livraison as date_livraison, c.fk_statut, c.facture as facturee,';
+
+}
+else
+{
+	$sql = 'SELECT s.nom, s.rowid as socid, s.client, c.rowid, c.ref, c.total_ht, c.ref_client,';
+	$sql .= ' c.date_valid, c.date_commande, c.note_private, c.date_livraison, c.fk_statut, c.facture as facturee,';
+}
 if ($conf->clinomadic->enabled) {
 	$sql .= " ce.reglement_recu,";
 }
-
-$sql .= ' (SELECT SUM(qty) FROM ' . MAIN_DB_PREFIX . 'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))  $sql .= 'cd.qty as qty_prod';
+else $sql .= ' (SELECT SUM(qty) FROM ' . MAIN_DB_PREFIX . 'commandedet WHERE fk_commande = c.rowid AND fk_product > 0 AND product_type = 0) as qty_prod';
 $sql .= ' FROM ' . MAIN_DB_PREFIX . 'societe as s';
 $sql .= ', ' . MAIN_DB_PREFIX . 'commande as c';
 $sql .= ', ' . MAIN_DB_PREFIX . 'commandedet as cd';
 if ($conf->clinomadic->enabled) {
 	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "commande_extrafields as ce ON (ce.fk_object = cd.fk_commande)";
+}
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "commandedet_extrafields as cde ON (cde.fk_object = cd.rowid)";
+	$sql .= " LEFT JOIN " . MAIN_DB_PREFIX . "product as prod ON (prod.rowid = cd.fk_product)";
 }
 // We'll need this table joined to the select in order to filter by sale
 if ($search_sale > 0 || (! $user->rights->societe->client->voir && ! $socid))
@@ -256,26 +286,43 @@ if ($sall) {
 }
 if ($ordermonth > 0) {
 	if ($orderyear > 0 && empty($day))
-		$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_get_first_day($orderyear, $ordermonth, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, $ordermonth, false)) . "'";
+		$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_get_first_day($orderyear, $ordermonth, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, $ordermonth, false)) . "'";
 	else if ($orderyear > 0 && ! empty($day))
-		$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $ordermonth, $day, $orderyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $ordermonth, $day, $orderyear)) . "'";
+		$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $ordermonth, $day, $orderyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $ordermonth, $day, $orderyear)) . "'";
 	else
-		$sql .= " AND date_format(c.date_valid, '%m') = '" . $ordermonth . "'";
+		$sql .= " AND date_format(c.date_commande, '%m') = '" . $ordermonth . "'";
 } else if ($orderyear > 0) {
-	$sql .= " AND c.date_valid BETWEEN '" . $db->idate(dol_get_first_day($orderyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, 12, false)) . "'";
+	$sql .= " AND c.date_commande BETWEEN '" . $db->idate(dol_get_first_day($orderyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($orderyear, 12, false)) . "'";
 }
-if ($deliverymonth > 0) {
+if ($deliverymonth > 0)
+{
 	if ($deliveryyear > 0 && empty($day))
-		$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false)) . "' AND '" . $db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false)) . "'";
-	else if ($deliveryyear > 0 && ! empty($day))
-		$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear)) . "' AND '" . $db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear)) . "'";
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false))."'";
+		else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, $deliverymonth, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, $deliverymonth, false))."'";
+	}
+	else if ($deliveryyear > 0 && !empty($day))
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear))."' AND '".$db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear))."'";
+		else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_mktime(0, 0, 0, $deliverymonth, $day, $deliveryyear))."' AND '".$db->idate(dol_mktime(23, 59, 59, $deliverymonth, $day, $deliveryyear))."'";
+
+	}
 	else
-		$sql .= " AND date_format(c.date_livraison, '%m') = '" . $deliverymonth . "'";
-} else if ($deliveryyear > 0) {
-	$sql .= " AND c.date_livraison BETWEEN '" . $db->idate(dol_get_first_day($deliveryyear, 1, false)) . "' AND '" . $db->idate(dol_get_last_day($deliveryyear, 12, false)) . "'";
+	{
+		if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND date_format(c.date_livraison, '%m') = '".$deliverymonth."'";
+		else $sql .= " AND date_format(cde.date_de_livraison, '%m') = '".$deliverymonth."'";
+	}
+}
+else if ($deliveryyear > 0)
+{
+	if(empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql .= " AND c.date_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, 1, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, 12, false))."'";
+	else $sql .= " AND cde.date_de_livraison BETWEEN '".$db->idate(dol_get_first_day($deliveryyear, 1, false))."' AND '".$db->idate(dol_get_last_day($deliveryyear, 12, false))."'";
 }
 if (! empty($snom)) {
 	$sql .= natural_search('s.nom', $snom);
+}
+if (! empty($sproduct)) {
+	$sql .= natural_search('prod.ref', $sproduct);
 }
 if (! empty($sref_client)) {
 	$sql .= ' AND c.ref_client LIKE \'%' . $db->escape($sref_client) . '%\'';
@@ -293,7 +340,10 @@ if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 	$sql .= ' AND cd.product_type = 0';
 }
 
-$sql .= ' GROUP BY c.rowid ORDER BY ' . $sortfield . ' ' . $sortorder;
+
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql.= ' GROUP BY cd.rowid,cde.date_de_livraison ';
+else $sql .= ' GROUP BY c.rowid';
+$sql.=  ' ORDER BY ' . $sortfield . ' ' . $sortorder;
 if ($limit > 0) {
 	$sql2 = $sql;
 	$sql .= $db->plimit($limit + 1, $offset);
@@ -375,6 +425,10 @@ if ($resql) {
 		$moreforfilter .= $langs->trans('LinkedToSpecificUsers') . ': ';
 		$moreforfilter .= $form->select_dolusers($search_user, 'search_user', 1);
 	}
+	
+	if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+		$moreforfilter = '<td></td>';
+	}
 	if (! empty($moreforfilter)) {
 		print '<tr class="liste_titre">';
 		print '<td class="liste_titre" colspan="10">';
@@ -391,10 +445,22 @@ if ($resql) {
 	if ($conf->clinomadic->enabled)
 		print_liste_field_titre($langs->trans('Règlement'), $_SERVER["PHP_SELF"], 'c.ref_client', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('RefCustomerOrder'), $_SERVER["PHP_SELF"], 'c.ref_client', '', $param, '', $sortfield, $sortorder);
+	if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+		print_liste_field_titre($langs->trans('Product'), $_SERVER["PHP_SELF"], '', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('Company'), $_SERVER["PHP_SELF"], 's.nom', '', $param, '', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('OrderDate'), $_SERVER["PHP_SELF"], 'c.date_commande', '', $param, 'align="right"', $sortfield, $sortorder);
-	print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'c.date_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
-	print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'c.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+	{
+		print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'cde.date_de_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
+
+		print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'cd.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	}
+	else
+	{
+		print_liste_field_titre($langs->trans('DeliveryDate'), $_SERVER["PHP_SELF"], 'c.date_livraison', '', $param, 'align="right"', $sortfield, $sortorder);
+
+		print_liste_field_titre($langs->trans('AmountHT'), $_SERVER["PHP_SELF"], 'c.total_ht', '', $param, 'align="right"', $sortfield, $sortorder);
+	}
 	print_liste_field_titre($langs->trans('AmountHTToShip'), $_SERVER["PHP_SELF"], '', '', $param, 'align="right"', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('Status'), $_SERVER["PHP_SELF"], 'c.fk_statut', '', $param, 'align="right"', $sortfield, $sortorder);
 	print_liste_field_titre($langs->trans('QtyProd'), $_SERVER["PHP_SELF"], 'qty_prod', '', $param, 'align="right"', $sortfield, $sortorder);
@@ -415,11 +481,22 @@ if ($resql) {
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" size="6" name="sref_client" value="' . $sref_client . '">';
 	print '</td>';
+	if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+		print '<td class="liste_titre" align="left">';
+		print '<input class="flat" type="text" size="6" name="sproduct" value="' . $sproduct . '">';
+		print '</td>';
+	}
 	print '<td class="liste_titre" align="left">';
 	print '<input class="flat" type="text" name="snom" value="' . $snom . '">';
 	print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
-	print '<td class="liste_titre">&nbsp;</td>';
+	print '<td class="liste_titre" align="center">';
+	//print $langs->trans('Month').': ';
+	
+	print '<input class="flat" type="text" size="1" maxlength="2" name="deliverymonth" value="'.$deliverymonth.'">';
+	//print '&nbsp;'.$langs->trans('Year').': ';
+	$formother->select_year($deliveryyear, 'deliveryyear', 1, 20, 5);
+	print '</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
 	print '<td class="liste_titre">&nbsp;</td>';
     print '<td class="liste_titre maxwidthonsmartphone" align="right">';
@@ -456,9 +533,14 @@ if ($resql) {
 		$generic_commande->id = $objp->rowid;
 		$generic_commande->ref = $objp->ref;
 		$shippableOrder->isOrderShippable($objp->rowid);
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+			$orderLine = new OrderLine($db);
+			$orderLine->fetch($objp->lineid);
+		}
 		
 		if (! empty($search_status)) {
-			$result = $shippableOrder->orderStockStatus(true, 'code');
+			
+			$result = $shippableOrder->orderStockStatus(true, 'code', $objp->lineid);
 			
 			if(!in_array($result, $search_status)) {
 				$BdisplayLine = false;
@@ -502,6 +584,13 @@ if ($resql) {
 			
 			// Ref customer
 			print '<td>' . $objp->ref_client . '</td>';
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) {
+				// fk product
+				dol_include_once('/product/class/product.class.php');
+				$prod = new Product($db);
+				$prod->fetch($objp->fk_product);
+				print '<td class="product" data-fk_prod="'.$objp->fk_product.'" >' . $prod->getNomUrl(1) . '</td>';
+			}
 			
 			// Company
 			$companystatic->id = $objp->socid;
@@ -535,18 +624,21 @@ if ($resql) {
 			
 			// Amount HT
 			print '<td align="right" class="nowrap">' . price($objp->total_ht) . '</td>';
-			
+
 			// Amount HT remain to ship
-			print '<td align="right" class="nowrap">' . price(round($shippableOrder->order->total_ht_to_ship, 2)) . '</td>';
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+				print '<td align="right" class="nowrap">' . price(round($shippableOrder->TlinesShippable[$objp->lineid]['to_ship']*$objp->subprice, 2)) . '</td>';
+			}
+			else print '<td align="right" class="nowrap">' . price(round($shippableOrder->order->total_ht_to_ship, 2)) . '</td>';
 			
 			// Statut
 			print '<td align="right" class="nowrap">' . $generic_commande->LibStatut($objp->fk_statut, $objp->facturee, 5) . '</td>';
 			
 			// Quantité de produit
-			print '<td align="right" class="nowrap">' . $objp->qty_prod . '</td>';
+			print '<td align="right" class="qty" data-qty_shippable="'.$shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'].'" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
-			print '<td align="right" class="nowrap">' . $shippableOrder->orderStockStatus() . '</td>';
+			print  !empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)?'<td align="right" class="nowrap">' .$shippableOrder->orderLineStockStatus($orderLine,true). '</td>':'<td align="right" class="nowrap">' .$shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
 			
 			if (! empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
 				$default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
@@ -562,27 +654,40 @@ if ($resql) {
 				$default_wharehouse = $res2->rowid;
 			}
 			
-			if ($shippableOrder->nbShippable > 0) {
+			if ((!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE) && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']) >0 && ($shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'] -  $shippableOrder->TlinesShippable[$objp->lineid]['to_ship'])==0) 
+				|| (empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)&&$shippableOrder->nbShippable > 0)) {
+				
+				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) $checkId=$objp->lineid;
+				else $checkId=$objp->rowid;
 				// TEnt_comm[] : clef = id_commande val = id_entrepot
-				print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $objp->rowid . ']', '', 1) . '</td>';
 				/*echo strtotime($objp->date_livraison);exit;
 				 echo dol_now();exit;*/
 				
 				// Checkbox pour créer expédition
-				$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
+					print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $checkId . ']', '', 1,'',$objp->fk_product) . '</td>';
+					$checked = $shippableOrder->is_ok_for_shipping($objp->lineid) && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				}
+				else {
+					
+					print '<td align="right" class="nowrap">' . $formproduct->selectWarehouses($default_wharehouse, 'TEnt_comm[' . $checkId . ']', '', 1) . '</td>';
+					$checked = $shippableOrder->is_ok_for_shipping() && strtotime($objp->date_livraison) <= dol_now() ? 'checked="checked"' : '';
+				}
 				if ($conf->global->SHIPPABLEORDER_NO_DEFAULT_CHECK) {
 					$checked = false;
 				}
 				
-				print '<td align="right" class="nowrap">' . '<input class="checkforgen" type="checkbox" ' . $checked . ' name="TIDCommandes[]" value="' . $objp->rowid . '" />' . '</td>';
+				print '<td align="right" class="nowrap">' . '<input class="checkforgen" type="checkbox" ' . $checked . ' name="TIDCommandes[]" value="' . $checkId . '" />' . '</td>';
 			} else {
+				
 				print '<td colspan="2">&nbsp;</td>';
 			}
 			
 			print '</tr>';
 			
 			$total += $objp->total_ht;
-			$totaltoship += $shippableOrder->order->total_ht_to_ship;
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$totaltoship += $shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']*$objp->subprice;
+			else $totaltoship += $shippableOrder->order->total_ht_to_ship;
 			$subtotal += $objp->total_ht;
 			$i ++;
 		}
@@ -595,8 +700,8 @@ if ($resql) {
 		} else {
 			print '<td align="left">' . $langs->trans("TotalHTforthispage") . '</td>';
 		}
-		
-		print '<td colspan="5" align="right"">' . price($total);
+		if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) print '<td colspan="6" align="right"">' . price($total) . '</td>';
+		else print '<td colspan="5" align="right"">' . price($total) . '</td>';
 		print '<td align="right"">' . price($totaltoship) . '<td colspan="5"></td>';
 		print '</tr>';
 	}
@@ -606,7 +711,7 @@ if ($resql) {
 	if ($num > 0 && $user->rights->expedition->creer) {
 		print '<input type="hidden" name="action" value="createShipping"/>';
 		print '<br /><input style="float:right" class="butAction" type="submit" name="subCreateShip" value="' . $langs->trans('CreateShipmentButton') . '" />';
-		if ($conf->global->SHIPPABLEORDER_ALLOW_CHANGE_STATUS_WITHOUT_SHIPMENT) {
+		if ($conf->global->SHIPPABLEORDER_ALLOW_CHANGE_STATUS_WITHOUT_SHIPMENT && empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)) {
 			print '<input style="float:right" class="butAction" type="submit" name="subSetSent" value="' . $langs->trans('SetOrderSentButton') . '" />';
 		}
 	}
@@ -644,6 +749,61 @@ if ($resql) {
 	print dol_print_error($db);
 }
 
+if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
+{
+	?>
+	<script type="text/javascript">
+		$(document).ready(function(){
+
+			$("select[id^='TEnt_comm']").on('change', function() {
+
+				let fk_product = $(this).closest('tr').find('td.product').data('fk_prod');
+				let qty = $(this).closest('tr').find('td.qty').data('qty_shippable');
+				let lineid = $(this).closest('tr').find('input.checkforgen').val();
+				let tr = $(this).closest('tr');
+				$.ajax({
+					url: '<?php echo dol_buildpath('/shippableorder/script/interface.php', 1); ?>'
+					,type: 'POST'
+					,data: {
+						get: 'batchLine'
+						,qty: qty
+						,fk_product: fk_product
+						,lineid: lineid
+						,warehouse_id: this.value
+					}
+					}).done(function(data) {
+						$(".batch_"+lineid).remove();
+						tr.after(data);
+					});
+
+
+			});
+
+			$("select[id^='TEnt_comm']").each(function(){
+				let fk_product = $(this).closest('tr').find('td.product').data('fk_prod');
+				let qty = $(this).closest('tr').find('td.qty').html();
+				let lineid = $(this).closest('tr').find('input.checkforgen').val();
+				let tr = $(this).closest('tr');
+				$.ajax({
+					url: '<?php echo dol_buildpath('/shippableorder/script/interface.php', 1); ?>'
+					,type: 'POST'
+					,data: {
+						get: 'batchLine'
+						,qty: qty
+						,fk_product: fk_product
+						,lineid: lineid
+						,warehouse_id: this.value
+					}
+					}).done(function(data) {
+						$(".batch_"+lineid).remove();
+						tr.after(data);
+					});
+			});
+
+		});
+	</script>
+	<?php
+}
 llxFooter();
 
 $db->close();
