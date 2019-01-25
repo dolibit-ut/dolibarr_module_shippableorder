@@ -52,6 +52,10 @@ class ActionsShippableorder
 				$('table#tablelines tr.liste_titre_add td.linecoldescription').first().after('<td class="linecolstock" align="right"></td>');
 				$('table#tablelines tr.liste_titre_add').next().children('td.linecoldescription').first().after('<td class="linecolstock" align="right"></td>');
 
+				$('table#tablelines tr.liste_titre_create td.linecoldescription').first().after('<td class="linecolstock nobottom" align="right"></td>');
+				$('table#tablelines tr.liste_titre_create').next().children('td.linecoldescription').first().after('<td class="linecolstock nobottom" align="right"></td>');
+				$('#trlinefordates td:first').after('<td class="linecolstock" align="right"></td>'); // Add empty column in objectline_create
+
 			</script>
 			<?php
 		}
