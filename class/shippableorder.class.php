@@ -425,7 +425,7 @@ class ShippableOrder
 				
 				foreach($this->order->lines as $line) {
 					if($this->TlinesShippable[$line->id]['stock'] > 0) {
-						$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+						$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']), $line->array_options);
 					}
 				}
 
