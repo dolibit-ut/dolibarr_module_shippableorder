@@ -65,9 +65,11 @@ $page = GETPOST("page", 'int');
 if ($page == - 1) {
 	$page = 0;
 }
-$offset = $conf->liste_limit * $page;
-$pageprev = $page - 1;
-$pagenext = $page + 1;
+if(!empty($page)){
+	$offset = $conf->liste_limit * $page;
+	$pageprev = $page - 1;
+	$pagenext = $page + 1;
+}
 if (! $sortfield)
 	$sortfield = 'c.date_livraison';
 if (! $sortorder)
@@ -401,7 +403,7 @@ if ($resql) {
 			if ($resql2)
 				$totalLine = $db->num_rows($resql2);
 		}
-		print_barre_liste($title . '&nbsp;<a href="' . $_SERVER["PHP_SELF"] . '?show_all=1' . $param . '">' . $langs->trans('ShowAllLine') . '</a>', $page, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $num, $totalLine);
+		print_barre_liste($title . '&nbsp;<a href="' . $_SERVER["PHP_SELF"] . '?show_all=1' . $param . '">' . $langs->trans('ShowAllLine') . '</a>', empty($page)?0:1, $_SERVER["PHP_SELF"], $param, $sortfield, $sortorder, '', $num, $totalLine);
 	} else {
 		print_fiche_titre($title, '<a href="' . $_SERVER["PHP_SELF"] . '?show_all=0' . (str_replace('&show_all=1', '', $param)) . '">' . $langs->trans('NotShowAllLine') . '</a>', $picto = 'title_generic.png');
 	}
@@ -427,7 +429,7 @@ if ($resql) {
 	}
 	
 	if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)){
-		$moreforfilter = '<td></td>';
+		$moreforfilter .= '<td></td>';
 	}
 	if (! empty($moreforfilter)) {
 		print '<tr class="liste_titre">';
