@@ -408,6 +408,7 @@ class ShippableOrder
 				$this->isOrderShippable($id_commande);
 
 				$shipping = new Expedition($db);
+				$shipping->ref_customer = $this->order->ref_client;
 				$shipping->origin = 'commande';
 				$shipping->origin_id = $id_commande;
 				$shipping->date_delivery = $this->order->date_livraison;
