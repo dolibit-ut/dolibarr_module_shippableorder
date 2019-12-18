@@ -1,21 +1,21 @@
 <?php
 class ActionsShippableorder
-{ 
-     /** Overloading the doActions function : replacing the parent's function with the one below 
-      *  @param      parameters  meta datas of the hook (context, etc...) 
-      *  @param      object             the object you want to process (an invoice if you are in invoice module, a propale in propale's module, etc...) 
-      *  @param      action             current action (if set). Generally create or edit or null 
-      *  @return       void 
+{
+     /** Overloading the doActions function : replacing the parent's function with the one below
+      *  @param      parameters  meta datas of the hook (context, etc...)
+      *  @param      object             the object you want to process (an invoice if you are in invoice module, a propale in propale's module, etc...)
+      *  @param      action             current action (if set). Generally create or edit or null
+      *  @return       void
       */
-      
-    function formObjectOptions($parameters, &$object, &$action, $hookmanager) 
-    {  
+
+    function formObjectOptions($parameters, &$object, &$action, $hookmanager)
+    {
       	global $db, $langs;
-		
-		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3 && $object->id > 0) 
+
+		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3 && $object->id > 0)
         {
         	dol_include_once('/shippableorder/class/shippableorder.class.php');
-			
+
 			$shippableOrder = new ShippableOrder($db);
 			$shippableOrder->isOrderShippable($object->id);
         	echo '<tr><td>'.$langs->trans('ShippableStatus').'</td>';
@@ -26,27 +26,27 @@ class ActionsShippableorder
 		return 0;
 	}
 
-	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager) 
-    {  
+	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
+    {
       	global $db, $langs;
-		
-		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3) 
+
+		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3)
         {
-     		
+
 			dol_include_once('/shippableorder/class/shippableorder.class.php');
-        	
+
 			$shippableOrder =  &$object->shippableorder;
-			
+
 			?>
 			<script type="text/javascript">
-				$('table#tablelines tr.liste_titre td.linecoldescription').first().after('<td class="linecolstock" align="right" style="color:#fff;"><?php echo $langs->trans('Available') ?></td>');				
+				$('table#tablelines tr.liste_titre td.linecoldescription').first().after('<td class="linecolstock" align="right" style="color:#fff;"><?php echo $langs->trans('Available') ?></td>');
 				<?php
 				foreach($object->lines as &$line) {
-					
+
 					$stock = $shippableOrder->orderLineStockStatus($line,true);
-					
+
 					?>
-					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");				
+					$('table#tablelines tr[id=row-<?php echo $line->id; ?>] td.linecoldescription').after("<td class=\"linecolstock nowrap\" align=\"right\"><?php echo addslashes($stock) ?></td>");
 					<?php
 				} ?>
 				$('table#tablelines tr.liste_titre_add td.linecoldescription').first().after('<td class="linecolstock" align="right"></td>');
@@ -55,11 +55,11 @@ class ActionsShippableorder
 				$('table#tablelines tr.liste_titre_create td.linecoldescription').first().after('<td class="linecolstock nobottom" align="right"></td>');
 				$('table#tablelines tr.liste_titre_create').next().children('td.linecoldescription').first().after('<td class="linecolstock nobottom" align="right"></td>');
 				$('#trlinefordates td:first').after('<td class="linecolstock" align="right"></td>'); // Add empty column in objectline_create
-
+				if($('tr[id^="extrarow"]').length > 0) $('tr[id^="extrarow"] td:first').after('<td class="linecolstock" align="right"></td>');
 			</script>
 			<?php
 		}
-		
+
 	}
 
 }
