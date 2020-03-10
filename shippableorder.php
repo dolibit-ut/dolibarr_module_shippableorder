@@ -412,7 +412,7 @@ if ($resql) {
 	// Lignes des champs de filtre
 	print '<form method="POST" action="' . $_SERVER["PHP_SELF"] . '">';
 	
-	print '<table class="noborder" width="100%">';
+	print '<table class="noborder liste" width="100%">';
 	
 	$moreforfilter = '';
 	
