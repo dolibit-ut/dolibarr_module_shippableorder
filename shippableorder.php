@@ -689,7 +689,7 @@ if ($resql) {
 			print '</tr>';
 			
 			$total += $objp->total_ht;
-			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$totaltoship += $shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable']*$objp->subprice;
+			if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$totaltoship += $shippableOrder->TlinesShippable[$objp->lineid]['to_ship']*$objp->subprice;
 			else $totaltoship += $shippableOrder->order->total_ht_to_ship;
 			$subtotal += $objp->total_ht;
 			$i ++;
