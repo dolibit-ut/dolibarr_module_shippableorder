@@ -467,7 +467,7 @@ class ShippableOrder
 
 
                         $parameters = array('context' =>  'shippableorderlist' , 'line' => $line ,'TEnt_comm'=>$TEnt_comm,'shipping'=> &$shipping);
-                        $reshook = $hookmanager->executeHooks('HandlerExpeditiontitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
+                        $reshook = $hookmanager->executeHooks('handleExpeditionTitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
                         if ($reshook < 0){
                             setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
                         }
@@ -535,7 +535,7 @@ class ShippableOrder
 
 
 					    $parameters = array('context' =>  'shippableorderlist' , 'line' => $line ,'TEnt_comm'=>$TEnt_comm,'shipping'=> &$shipping);
-					    $reshook = $hookmanager->executeHooks('HandlerExpeditiontitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
+					    $reshook = $hookmanager->executeHooks('handleExpeditionTitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
                         if ($reshook < 0){
                             setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
                         }
