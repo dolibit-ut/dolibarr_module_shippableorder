@@ -422,27 +422,24 @@ class ShippableOrder
 	 * Création automatique des expéditions à partir de la liste des expédiables, uniquement avec les quantité expédiables
 	 */
 	function createShipping($TIDCommandes, $TEnt_comm) {
-		global $user, $langs, $conf;
-		
+		global $user, $langs, $conf , $hookmanager;
 		$db = &$this->db;
-		
 		dol_include_once('/expedition/class/expedition.class.php');
 		dol_include_once('/core/modules/expedition/modules_expedition.php');
 		dol_include_once('/core/lib/product.lib.php');
 
-		// Option pour la génération PDF
+        // Option pour la génération PDF
 		$hidedetails = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DETAILS) ? 1 : 0);
 		$hidedesc = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_DESC) ? 1 : 0);
 		$hideref = (!empty($conf->global->MAIN_GENERATE_DOCUMENTS_HIDE_REF) ? 1 : 0);
 
 		$nbShippingCreated = 0;
-
 		if (count($TIDCommandes) > 0)
 		{
 			if (!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))
 			{
 				$TToShip = $this->groupLineByOrder($TIDCommandes); //On fait une expédition par commande
-				
+
 				foreach ($TToShip as $id_commande => $lineids)
 				{
 
@@ -467,10 +464,16 @@ class ShippableOrder
 
 					foreach ($this->order->lines as $line)
 					{
+
+
+                        $parameters = array('line' => $line ,'TEnt_comm'=>$TEnt_comm,'shipping'=> &$shipping);
+                        $reshook = $hookmanager->executeHooks('handleExpeditionTitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
+                        if ($reshook < 0){
+                            setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+                        }
 						if ($this->TlinesShippable[$line->id]['stock'] > 0 && in_array($line->id, $lineids))
 						{
-							
-							if (! empty($conf->productbatch->enabled) && ! empty($line->fk_product) && ! empty($line->product_tobatch)){
+                            if (! empty($conf->productbatch->enabled) && ! empty($line->fk_product) && ! empty($line->product_tobatch)){
 								dol_include_once('/product/class/product.class.php');
 								$product = new Product($db);
 								$product->fetch($line->fk_product);
@@ -497,12 +500,13 @@ class ShippableOrder
 						$shipping->statut = 0;
 						$shipping->valid($user);
 					}
-					//var_dump($shipping);exit;
+
 					// Génération du PDF
 					if (!empty($conf->global->SHIPPABLEORDER_GENERATE_SHIPMENT_PDF))
 						$TFiles[] = $this->shipment_generate_pdf($shipping, $hidedetails, $hidedesc, $hideref);
 				}
 			} else {
+
 				$TIDCommandes = $this->orderCommandeByClient($TIDCommandes);
 
 				foreach ($TIDCommandes as $id_commande)
@@ -528,9 +532,18 @@ class ShippableOrder
 
 					foreach ($this->order->lines as $line)
 					{
-						if ($this->TlinesShippable[$line->id]['stock'] > 0)
+
+
+					    $parameters = array('line' => $line ,'TEnt_comm'=>$TEnt_comm,'shipping'=> &$shipping);
+					    $reshook = $hookmanager->executeHooks('handleExpeditionTitleAndTotal',$parameters , $this, $action);    // Note that $action and $object may have been modified by some hooks
+                        if ($reshook < 0){
+                            setEventMessages($hookmanager->error, $hookmanager->errors, 'errors');
+                        }
+
+					    if ($this->TlinesShippable[$line->id]['stock'] > 0)
 						{
-							$shipping->addline($TEnt_comm[$this->order->id], $line->id, (($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable']));
+                            $r  = ($this->TlinesShippable[$line->id]['qty_shippable'] > $this->TlinesShippable[$line->id]['to_ship']) ? $this->TlinesShippable[$line->id]['to_ship'] : $this->TlinesShippable[$line->id]['qty_shippable'];
+							$shipping->addline($TEnt_comm[$this->order->id], $line->id, $r);
 						}
 					}
 
@@ -556,7 +569,7 @@ class ShippableOrder
 			foreach($_REQUEST as $k=>$v) {
 				if($k!='TIDCommandes' && $k!='TEnt_comm' && $k!='action' && $k!='subCreateShip') $TURL[$k] = $v;
 			}
-//var_dump($TURL);exit;
+
 			
 			if($nbShippingCreated > 0) {
 				if($conf->global->SHIPPABLEORDER_GENERATE_GLOBAL_PDF) $this->generate_global_pdf($TFiles);	
