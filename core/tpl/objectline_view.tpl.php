@@ -145,7 +145,7 @@ if(isset($this->shippableorder)) {
 	}
 	?>
 	</td>
-	<?php if ($object->element == 'supplier_proposal') { ?>
+	<?php if ($object->element == 'supplier_proposal' || $object->element == 'order_supplier' || $object->element == 'invoice_supplier') { ?>
 		<td class="linecolrefsupplier" align="right"><?php echo $line->ref_fourn; ?></td>
 	<?php }
 	// VAT Rate
