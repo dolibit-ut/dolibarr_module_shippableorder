@@ -54,8 +54,10 @@ if (!is_array($search_status) && $search_status <= 0) {
 
 // Security check
 $id = (GETPOST('orderid') ? GETPOST('orderid') : GETPOST('id', 'int'));
-if ($user->societe_id)
+if (!empty($user->societe_id))
 	$socid = $user->societe_id;
+elseif (!empty($user->socid))
+	$socid = $user->socid;
 $result = restrictedArea($user, 'commande', $id, '');
 
 $sortfield = GETPOST("sortfield", 'alpha');

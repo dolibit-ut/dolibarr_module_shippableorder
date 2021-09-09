@@ -208,7 +208,7 @@ if(isset($this->shippableorder)) {
 		print '<td align="right" class="linecolcycleref nowrap">' . $line->situation_percent . '%</td>';
 	}
 
-  	if ($usemargins && ! empty($conf->margin->enabled) && empty($user->societe_id))
+  	if ($usemargins && ! empty($conf->margin->enabled) && empty($user->societe_id) && empty($user->socid))
   	{
 		$rounding = min($conf->global->MAIN_MAX_DECIMALS_UNIT,$conf->global->MAIN_MAX_DECIMALS_TOT);
   		?>
