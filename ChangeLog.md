@@ -3,8 +3,8 @@
 ## Unreleased
 
 
-## 2.1
-- FIX: v13 — 14 compatibility: societe_id,  - *2021-09-09* - 2.1.1
+- FIX: v13 — 14 compatibility: societe_id,  - *2021-09-09* - 2.1.3
+- FIX : Compatibility V13 - Add token renewal - *18/05/2021* 2.1.2
 
 ## 2.0
 - NEW: v3.9 — 11 compatibility
@@ -20,4 +20,6 @@
     *2016-04-25* - 2.0
 
 ## 1.0
+ Initial version
+
 

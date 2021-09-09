@@ -346,8 +346,8 @@ if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 }
 
 
-if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql.= ' GROUP BY cd.rowid,cde.date_de_livraison ';
-else $sql .= ' GROUP BY c.rowid';
+if(!empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE))$sql.= ' GROUP BY cd.rowid, cde.date_de_livraison, s.rowid, c.rowid ';
+else $sql .= ' GROUP BY c.rowid, s.rowid';
 $sql.=  ' ORDER BY ' . $sortfield . ' ' . $sortorder;
 if ($limit > 0) {
 	$sql2 = $sql;
