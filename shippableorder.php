@@ -338,7 +338,7 @@ if ($search_user > 0) {
 
 if($search_status_cmd > 0) $sql.= ' AND c.fk_statut = '.$search_status_cmd;
 else $sql .= ' AND c.fk_statut IN (1,2)';
-// var_dump($conf->global->STOCK_SUPPORTS_SERVICES);
+
 if (empty($conf->global->STOCK_SUPPORTS_SERVICES)) {
 	$sql .= ' AND cd.product_type = 0';
 }
