@@ -70,3 +70,6 @@ ConfirmArchiveFiles=Êtes-vous sûr de vouloir archiver les documents PDF ?
 
 
 SelectByLine=Sélection par ligne de commande plutôt que par commande
+VirtualStockDetailHeader=Le stock théorique tient compte de :  %s
+VirtualStockDetail=</br> Les %s aux statuts %s
+VirtualStockDetailReception=</br> Les réceptions fournisseurs

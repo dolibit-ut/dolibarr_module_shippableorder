@@ -155,7 +155,8 @@ class ShippableOrder
 				$produit = &$this->TProduct[$line->fk_product];
 			}
 			$line->stock = $produit->stock_reel;
-			
+			$line->stock_virtuel = $produit->stock_theorique;
+
 			// Filtre par entrepot de l'utilisateur
 			if(!empty($conf->global->SHIPPABLEORDER_ENTREPOT_BY_USER) && !empty($user->array_options['options_entrepot_preferentiel'])) {
 				$line->stock = $produit->stock_warehouse[$user->array_options['options_entrepot_preferentiel']]->real;
@@ -174,27 +175,47 @@ class ShippableOrder
 			}
 		}
 
-		if ($conf->global->SHIPPABLE_ORDER_ALLOW_SHIPPING_IF_NOT_ENOUGH_STOCK )
+        list($isShippable, $qtyShippable) = self::getQtyShippable($line->stock, $line, $TSomme);
+        list($isShippableVirtual, $qtyShippableVirtual) = self::getQtyShippable($line->stock_virtuel, $line, $TSomme);
+        $this->TlinesShippable[$line->id] = array(
+            'stock' => price2num($line->stock, 'MS'),
+            'shippable' => $isShippable,
+            'to_ship' => $line->qty_toship,
+            'qty_shippable' => $qtyShippable,
+            'stock_virtuel' => price2num($line->stock_virtuel, 'MS'),
+            'isShippableVirtual' => $isShippableVirtual,
+            'qtyShippableVirtual' => $qtyShippableVirtual
+        );
+		
+		return $isShippable;
+	}
+
+    /**
+     * @param float $stock
+     * @param OrderLine $line
+     * @param array $TSomme
+     * @return array
+     */
+    public static function getQtyShippable($stock, $line, $TSomme) {
+        global $conf;
+        if ($conf->global->SHIPPABLE_ORDER_ALLOW_SHIPPING_IF_NOT_ENOUGH_STOCK )
 		{
 			$isShippable = 1;
 			$qtyShippable = $line->qty;
 			$line->stock = $line->qty;
 		}
-		else if($line->stock <= 0 || $line->qty_toship <= 0) {
+        else if($stock <= 0 || $line->qty_toship <= 0) {
 			$isShippable = 0;
 			$qtyShippable = 0;
-		} else if ($TSomme[$line->fk_product] <= $line->stock) {
+		} else if ($TSomme[$line->fk_product] <= $stock) {
 			$isShippable = 1;
 			$qtyShippable = $line->qty_toship;
 		} else {
 			$isShippable = 2;
-			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $line->stock;
+			$qtyShippable = $line->qty_toship - $TSomme[$line->fk_product] + $stock;
 		}
-		
-		$this->TlinesShippable[$line->id] = array('stock'=>price2num($line->stock, 'MS'),'shippable'=>$isShippable,'to_ship'=>$line->qty_toship,'qty_shippable'=>$qtyShippable);
-		
-		return $isShippable;
-	}
+        return array($isShippable, $qtyShippable);
+    }
 	
 	/**
 	 * 
@@ -269,41 +290,109 @@ class ShippableOrder
 		} else {
 			return '';
 		}
-		
-		$infos = '';
-		
-		// Produit déjà totalement expédié
-		if($isShippable['to_ship'] <= 0) {
-			$pictopath = img_picto('', 'statut5.png', '', false, 1);
-		}
-		
-		// Produit avec un reste à expédier
-		else if($isShippable['shippable'] == 1) {
-			$pictopath = img_picto('', 'statut4.png', '', false, 1);
-		} elseif($isShippable['shippable'] == 0) {
-			$pictopath = img_picto('', 'statut8.png', '', false, 1);
-		} else {
-			$pictopath = img_picto('', 'statut1.png', '', false, 1);
-		}
-		
-		$infos = $langs->trans('QtyInStock', $isShippable['stock']);
-		$infos.= " - ".$langs->trans('RemainToShip', $isShippable['to_ship']);
-		$infos.= " - ".$langs->trans('QtyShippable', $isShippable['qty_shippable']);
-		
-		$picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
-		if($isShippable['to_ship'] > 0 && $isShippable['to_ship'] != $line->qty) {
-			$picto.= ' ('.$isShippable['to_ship'].')';
-		}
-		
+
+        $picto = self::getPicto($isShippable['to_ship'], $isShippable['shippable'], $isShippable['stock'], $isShippable['qty_shippable'], $line);
+        $virtualPicto = self::getPicto($isShippable['to_ship'], $isShippable['isShippableVirtual'], $isShippable['stock_virtuel'], $isShippable['qtyShippableVirtual'], $line);
+
 		if($withStockVisu) {
-			return $isShippable['stock'].' '.$picto;	
+			return array($isShippable['stock'].' '.$picto, $isShippable['stock_virtuel'].' '.$virtualPicto);
 		}
 		else{
-			return $picto;	
+			return array($picto, $virtualPicto);
 		}
 		
 		
 	}
+
+
+    public static function prepareTooltip() {
+        global $langs, $conf;
+        $out = $langs->trans('VirtualStockDetailHeader');
+
+		if (!empty($conf->mrp->enabled)) {
+			$out .= $langs->trans('VirtualStockDetail', 'ordres de fabrication','"Validé" et "En cours"');
+		}
+
+		// Stock decrease mode
+		if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT) || !empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE) || !empty($conf->global->STOCK_CALCULATE_ON_BILL)) {
+            $out .= $langs->trans('VirtualStockDetail', 'commandes','"Validé" et "En cours"');
+			if (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT)) {
+				$out .= $langs->trans('VirtualStockDetail', 'expeditions','"Validé" et "Cloturé"');
+			} elseif (!empty($conf->global->STOCK_CALCULATE_ON_SHIPMENT_CLOSE)) {
+				$out .= $langs->trans('VirtualStockDetail', 'expeditions','"Cloturé"');
+			}
+
+		}
+		// Stock Increase mode
+		if (!empty($conf->global->STOCK_CALCULATE_ON_RECEPTION)
+            || !empty($conf->global->STOCK_CALCULATE_ON_RECEPTION_CLOSE)
+            || !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_DISPATCH_ORDER)
+            || !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER)
+            || !empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_BILL)) {
+            $statusCmdFourn = '"Accepté", "Envoyé", "Reçu partiellement"';
+            if (isset($includedraftpoforvirtual)) {
+                $statusCmdFourn .= ',"Brouillon", "Validé"';
+            }
+            if(empty($conf->global->STOCK_CALCULATE_ON_SUPPLIER_VALIDATE_ORDER)) $out .= $langs->trans('VirtualStockDetail', 'commandes fournisseurs',$statusCmdFourn);
+            $out .= $langs->trans('VirtualStockDetailReception');
+
+		}
+        return $out;
+    }
+
+    /**
+     * @param float $toship
+     * @param float $shippable
+     * @param float $stock
+     * @param float $qty_shippable
+     * @param OrderLine $line
+     * @return string
+     */
+    public static function getPicto($toship, $shippable, $stock, $qty_shippable, $line) {
+        $pictopath = self::getPictoPath($toship, $shippable);
+		$infos = self::getPictoInfos($stock, $toship, $qty_shippable);
+        $picto = '<img src="'.$pictopath.'" border="0" title="'.$infos.'">';
+		if($toship > 0 && $toship != $line->qty) {
+			$picto.= ' ('.$toship.')';
+		}
+        return $picto;
+    }
+
+    /**
+     * @param float $stock
+     * @param float $toship
+     * @param float $qty_shippable
+     * @return string
+     */
+    public static function getPictoInfos($stock, $toship, $qty_shippable) {
+        global $langs;
+        $infos = $langs->trans('QtyInStock', $stock);
+        $infos .= " - ".$langs->trans('RemainToShip', $toship);
+        $infos .= " - ".$langs->trans('QtyShippable', $qty_shippable);
+        return $infos;
+    }
+
+    /**
+     * @param int $to_ship
+     * @param int $shippable
+     * @return string
+     */
+    public static function getPictoPath($to_ship, $shippable) {
+        // Produit déjà totalement expédié
+		if($to_ship <= 0) {
+			$pictopath = img_picto('', 'statut5.png', '', false, 1);
+		}
+
+		// Produit avec un reste à expédier
+		else if($shippable == 1) {
+			$pictopath = img_picto('', 'statut4.png', '', false, 1);
+		} elseif($shippable == 0) {
+			$pictopath = img_picto('', 'statut8.png', '', false, 1);
+		} else {
+			$pictopath = img_picto('', 'statut1.png', '', false, 1);
+		}
+        return $pictopath;
+    }
 	
 	function is_ok_for_shipping($lineid=''){
 		global $conf;
