@@ -643,7 +643,8 @@ if ($resql) {
 			print '<td align="right" class="qty" data-qty_shippable="'.$shippableOrder->TlinesShippable[$objp->lineid]['qty_shippable'].'" class="nowrap">' . $objp->qty_prod . '</td>';
 			
 			// Expédiable
-			print  !empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)?'<td align="right" class="nowrap">' .$shippableOrder->orderLineStockStatus($orderLine,true). '</td>':'<td align="right" class="nowrap">' .$shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
+            $TPictoShippable = $shippableOrder->orderLineStockStatus($orderLine,true);
+			print  !empty($conf->global->SHIPPABLEORDER_SELECT_BY_LINE)?'<td align="right" class="nowrap">' .$TPictoShippable[0]. '</td>':'<td align="right" class="nowrap">' .$shippableOrder->orderStockStatus(true, 'txt', $objp->lineid) . '</td>';
 			
 			if (! empty($conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE)) {
 				$default_wharehouse = $conf->global->SHIPPABLEORDER_DEFAULT_WAREHOUSE;
