@@ -191,6 +191,7 @@ class ShippableOrder
 	}
 
     /**
+     * Get if line is shippable and qty shippable
      * @param float $stock
      * @param OrderLine $line
      * @param array $TSomme
@@ -304,7 +305,10 @@ class ShippableOrder
 		
 	}
 
-
+    /**
+     * Prepare virtual tooltip msg
+     * @return string
+     */
     public static function prepareTooltip() {
         global $langs, $conf;
         $out = $langs->trans('VirtualStockDetailHeader');
@@ -341,6 +345,7 @@ class ShippableOrder
     }
 
     /**
+     * Get picto shippable order line
      * @param float $toship
      * @param float $shippable
      * @param float $stock
@@ -359,6 +364,7 @@ class ShippableOrder
     }
 
     /**
+     * Get picto qty infos
      * @param float $stock
      * @param float $toship
      * @param float $qty_shippable
@@ -373,6 +379,7 @@ class ShippableOrder
     }
 
     /**
+     * Get picto img status
      * @param int $to_ship
      * @param int $shippable
      * @return string
