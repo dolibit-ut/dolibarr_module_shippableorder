@@ -28,7 +28,7 @@ class ActionsShippableorder
 
 	function addMoreActionsButtons($parameters, &$object, &$action, $hookmanager)
     {
-      	global $db, $langs;
+      	global $db, $langs, $conf;
 
 		if (in_array('ordercard',explode(':',$parameters['context'])) && $object->statut < 3)
         {
@@ -39,12 +39,13 @@ class ActionsShippableorder
 			$shippableOrder =  &$object->shippableorder;
             $form = new Form($db);
             $virtualTooltip = ShippableOrder::prepareTooltip();
-
+            $textColor = $conf->global->THEME_ELDY_TEXTTITLE;
 
 			?>
 			<script type="text/javascript">
-				$('table#tablelines tr.liste_titre td.linecoldescription').first().after('<td class="linecolstock" align="right" style="color:#fff;"><?php echo $form->textwithpicto($langs->trans('TheoreticalStock'), $virtualTooltip) ?></td><td class="linecolstock" align="right" style="color:#fff;"><?php echo $langs->trans('RealStock') ?></td>');
-				<?php
+				$('table#tablelines tr.liste_titre td.linecoldescription').first().after('<td class="linecolstock" align="right" style="color:<?php echo $textColor ?>;"><?php echo $form->textwithpicto($langs->trans('TheoreticalStock'), $virtualTooltip) ?></td><td class="linecolstock" align="right" style="<?php echo $textColor ?>;"><?php echo $langs->trans('RealStock') ?></td>');
+
+                <?php
 				foreach($object->lines as &$line) {
 
 					$stock = $shippableOrder->orderLineStockStatus($line,true);
