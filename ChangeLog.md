@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 2.2
+
 - FIX: Stock's column colour correction on order - *2021-10-06* - 2.2.1
 - NEW: Colonne stock virtuel - *2021-09-21* - 2.2.0
 - FIX: v13 — 14 compatibility: societe_id,  - *2021-09-09* - 2.1.3
